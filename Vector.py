@@ -12,6 +12,7 @@ def normalization3d(v):
         v=v/mod
     return v
 
+
 def moltiplication_beetween_matrix_and_array(a,b):
     (ra,ca)=a.shape
     c=np.zeros((ra))
@@ -32,17 +33,32 @@ class Vector(object):
 
 
     def rotation_x(self,alpha):
-        rotational_matrix = np.array([[1, 0, 0], [0, np.cos(alpha), -np.sin(alpha)], [0, np.sin(alpha), np.cos(alpha)]])
-        [self.x,self.y,self.z]=moltiplication_beetween_matrix_and_array(rotational_matrix,[self.x,self.y,self.z])
+        x=self.x
+        y=self.y
+        z=self.z
+        self.x = x
+        self.y = y*np.cos(alpha)-z*np.sin(alpha)
+        self.z = y*np.sin(alpha)+z*np.cos(alpha)
 
     def rotation_y(self,beta):
-        rotational_matrix = np.array([[np.cos(beta),0,np.sin(beta)],[0,1,0],[-np.sin(beta),0,np.cos(beta)]])
-        [self.x,self.y,self.z]=moltiplication_beetween_matrix_and_array(rotational_matrix,[self.x,self.y,self.z])
+        x=self.x
+        y=self.y
+        z=self.z
+        self.x = x*np.cos(beta)+z*np.sin(beta)
+        self.y = y
+        self.z = -x*np.sin(beta)+z*np.cos(beta)
 
 
     def rotation_z(self,gamma):
-        rotational_matrix = np.array([[np.cos(gamma), -np.sin(gamma), 0], [np.sin(gamma), np.cos(gamma), 0], [0, 0, 1]])
-        [self.x,self.y,self.z]=moltiplication_beetween_matrix_and_array(rotational_matrix,[self.x,self.y,self.z])
+        x=self.x
+        y=self.y
+        z=self.z
+        self.x = x*np.cos(gamma)-y*np.sin(gamma)
+        self.y = x*np.sin(gamma)+y*np.cos(gamma)
+        self.z = z
+
+
+
 
 
     def rotation(self,alpha,axis="x"):

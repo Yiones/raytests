@@ -1,5 +1,7 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
+from Vector import Vector
 from numpy import pi
 
 from Vector import normalization3d
@@ -59,10 +61,90 @@ class Optical_element(object):
 
 
 
+    def rotation(self, beam):                               # rotation along x axis of an angle depending on theta, and along y with an angle tetha
+
+        position = Vector(beam.x,beam.y,beam.z)
+        velocity = Vector(beam.vx,beam.vy,beam.vz)
+        position.rotation(self.alpha,"y")
+        position.rotation(-(90-self.theta),"x")
+        velocity.rotation(self.alpha,"y")
+        velocity.rotation(-(90-self.theta),"x")
+        [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
+        [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
+
+
+    def rotation2(self,beam):
+        position = Vector(beam.x, beam.y, beam.z)
+        velocity = Vector(beam.vx, beam.vy, beam.vz)
+        position.rotation_x2(-(90-self.theta))
+        velocity.rotation_x2(-(90-self.theta))
+        [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
+        [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
+
+
+
+    def translation(self,beam):
+        vector_point=Vector(0,self.p,0)
+        vector_point.rotation(self.alpha,"y")
+        vector_point.rotation(-(90-self.theta),"x")
+
+        beam.x=beam.x-vector_point.x
+        beam.y=beam.y-vector_point.y
+        beam.z=beam.z-vector_point.z
+
+
+    def rotation_to_the_screen(self,beam):
+
+        position = Vector(beam.x,beam.y,beam.z)
+        velocity = Vector(beam.vx,beam.vy,beam.vz)
+        #position.rotation(self.alpha,"y")
+        position.rotation(-(90-self.theta),"x")
+        #velocity.rotation(self.alpha,"y")
+        velocity.rotation(-(90-self.theta),"x")
+        [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
+        [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
 
 
 
 
+
+    def translation_to_the_screen(self,beam):
+        beam.y=beam.y-self.q
+
+
+    def intersection_with_plane_mirror(self,beam):
+        for i in range(0,beam.N):
+            t=-beam.z[i]/beam.vz[i]
+            beam.x[i]=beam.x[i]+beam.vx[i]*t
+            beam.y[i]=beam.y[i]+beam.vy[i]*t
+            beam.z[i]=beam.z[i]+beam.vz[i]*t
+
+
+
+
+
+
+    def intersection_with_spherical_mirror(self,beam):
+        for i in range(0,beam.N):
+            a=beam.vx[i]**2+beam.vy[i]**2+beam.vz[i]**2
+            b=beam.x[i]*beam.vx[i]+beam.y[i]*beam.vy[i]+beam.z[i]*beam.vz[i]-beam.vz[i]*self.R                             #This is not b but b/2
+            c=beam.x[i]**2+beam.y[i]**2+beam.z[i]**2-2*beam.z[i]*self.R
+            t=(-2*b+np.sqrt(4*b**2-4*a*c))/(2*a)
+            if t>0:
+                t=t
+            else:
+                t=(-b-np.sqrt(b**2-a*c))/a
+            beam.x[i]=beam.x[i]+beam.vx[i]*t
+            beam.y[i]=beam.y[i]+beam.vy[i]*t
+            beam.z[i]=beam.z[i]+beam.vz[i]*t
+
+
+    def intersection_with_the_screen(self,beam):
+        for i in range(0,beam.N):
+            t=-beam.y[i]/beam.vy[i]
+            beam.x[i]=beam.x[i]+beam.vx[i]*t
+            beam.y[i]=beam.y[i]+beam.vy[i]*t
+            beam.z[i]=beam.z[i]+beam.vz[i]*t
 
 
 
@@ -72,66 +154,64 @@ class Optical_element(object):
 
     def reflection_plane_mirror(self, beam):
 
-        point_before_the_mirror = np.array([[0],[self.p],[0]])
-        point_after_the_mirror  = np.array([[0.],[self.q],[0.]])
 
-        beam.rotation(self.theta,self.alpha)
-        beam.translation(point_before_the_mirror)
-        beam.intersection_with_plane_mirror()
+        self.rotation(beam)
+        self.translation(beam)
+        self.intersection_with_plane_mirror(beam)
 
 
-        normal = np.array([0, 0, 1])
+        normal=np.array([0,0,1])
+
         for i in range(0,beam.N):
             vector=[beam.vx[i],beam.vy[i],beam.vz[i]]
             vperp  = -np.dot(vector, normal)*normal
             vparall= vector+vperp
             [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
 
-        beam.plot_xy()
-        plt.title("Position of the rays at the mirror")
+
+        beam.plot_yx()
 
 
+        print (np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
+        self.rotation_to_the_screen(beam)
+        print (np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
 
-        beam.rotation(self.theta,self.alpha)
-        beam.translation_to_the_screen(point_after_the_mirror)
-        beam.intersection_with_the_screen()
 
-        beam.plot_xz()
-        plt.title("Position of the rays at the screen")
+        self.translation_to_the_screen(beam)
+
+        self.intersection_with_the_screen(beam)
+
+
 
         return beam
 
     def reflection_spherical_mirror(self, beam):
 
-        point_before_the_mirror = np.array([[0],[self.p],[0]])
-        point_after_the_mirror  = np.array([[0.],[self.q],[0.]])
+        self.rotation(beam)
+        self.translation(beam)
 
-        beam.rotation(self.theta,self.alpha)
+        self.intersection_with_spherical_mirror(beam)
 
-        beam.translation(point_before_the_mirror)
-        beam.intersection_with_spherical_mirror(self.R)
 
-        beam.plot_xz()
-        beam.plot_xy()
+        beam.plot_yx()
 
-        #We have to write the effect of the sferical mirror
+
 
 
         for i in range(0,beam.N):
-            normal  = np.array([2*beam.x[i], 2*beam.y[i], 2*beam.z[i]+2*self.R])
+            normal  = np.array([2*beam.x[i], 2*beam.y[i], 2*beam.z[i]-2*self.R])
             normal  = normalization3d(normal)
             vector  = [beam.vx[i],beam.vy[i],beam.vz[i]]
             vperp   = -np.dot(vector, normal)*normal
             vparall = vector+vperp
             [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
 
+        self.rotation_to_the_screen(beam)
 
-        beam.rotation(self.theta,self.alpha)
-        beam.translation_to_the_screen(point_after_the_mirror)
-        beam.intersection_with_the_screen()
+        self.translation_to_the_screen(beam)
+        self.intersection_with_the_screen(beam)
 
 
-        beam.plot_xz()
 
         return beam
 
