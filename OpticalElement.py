@@ -73,15 +73,6 @@ class Optical_element(object):
         [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
 
 
-    def rotation2(self,beam):
-        position = Vector(beam.x, beam.y, beam.z)
-        velocity = Vector(beam.vx, beam.vy, beam.vz)
-        position.rotation_x2(-(90-self.theta))
-        velocity.rotation_x2(-(90-self.theta))
-        [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
-        [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
-
-
 
     def translation(self,beam):
         vector_point=Vector(0,self.p,0)
@@ -97,9 +88,7 @@ class Optical_element(object):
 
         position = Vector(beam.x,beam.y,beam.z)
         velocity = Vector(beam.vx,beam.vy,beam.vz)
-        #position.rotation(self.alpha,"y")
         position.rotation(-(90-self.theta),"x")
-        #velocity.rotation(self.alpha,"y")
         velocity.rotation(-(90-self.theta),"x")
         [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
         [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
@@ -113,68 +102,59 @@ class Optical_element(object):
 
 
     def intersection_with_plane_mirror(self,beam):
-        for i in range(0,beam.N):
-            t=-beam.z[i]/beam.vz[i]
-            beam.x[i]=beam.x[i]+beam.vx[i]*t
-            beam.y[i]=beam.y[i]+beam.vy[i]*t
-            beam.z[i]=beam.z[i]+beam.vz[i]*t
-
-
-
-
+        t=-beam.z/beam.vz
+        beam.x = beam.x+beam.vx*t
+        beam.y = beam.y+beam.vy*t
+        beam.z = beam.z+beam.vz*t
 
 
     def intersection_with_spherical_mirror(self,beam):
-        for i in range(0,beam.N):
-            a=beam.vx[i]**2+beam.vy[i]**2+beam.vz[i]**2
-            b=beam.x[i]*beam.vx[i]+beam.y[i]*beam.vy[i]+beam.z[i]*beam.vz[i]-beam.vz[i]*self.R                             #This is not b but b/2
-            c=beam.x[i]**2+beam.y[i]**2+beam.z[i]**2-2*beam.z[i]*self.R
+            a=beam.vx**2+beam.vy**2+beam.vz**2
+            b=beam.x*beam.vx+beam.y*beam.vy+beam.z*beam.vz-beam.vz*self.R                             #This is not b but b/2
+            c=beam.x**2+beam.y**2+beam.z**2-2*beam.z*self.R
             t=(-2*b+np.sqrt(4*b**2-4*a*c))/(2*a)
-            if t>0:
+            if t[0]>=0:
                 t=t
             else:
                 t=(-b-np.sqrt(b**2-a*c))/a
-            beam.x[i]=beam.x[i]+beam.vx[i]*t
-            beam.y[i]=beam.y[i]+beam.vy[i]*t
-            beam.z[i]=beam.z[i]+beam.vz[i]*t
+            beam.x = beam.x+beam.vx*t
+            beam.y = beam.y+beam.vy*t
+            beam.z = beam.z+beam.vz*t
+
 
 
     def intersection_with_the_screen(self,beam):
-        for i in range(0,beam.N):
-            t=-beam.y[i]/beam.vy[i]
-            beam.x[i]=beam.x[i]+beam.vx[i]*t
-            beam.y[i]=beam.y[i]+beam.vy[i]*t
-            beam.z[i]=beam.z[i]+beam.vz[i]*t
-
-
-
-
+        t=-beam.y/beam.vy
+        beam.x = beam.x+beam.vx*t
+        beam.y = beam.y+beam.vy*t
+        beam.z = beam.z+beam.vz*t
 
 
 
     def reflection_plane_mirror(self, beam):
-
-
         self.rotation(beam)
         self.translation(beam)
         self.intersection_with_plane_mirror(beam)
 
-
-        normal=np.array([0,0,1])
-
-        for i in range(0,beam.N):
-            vector=[beam.vx[i],beam.vy[i],beam.vz[i]]
-            vperp  = -np.dot(vector, normal)*normal
-            vparall= vector+vperp
-            [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
-
-
         beam.plot_yx()
+        plt.title("footprint")
+
+        # effect of the plane mirror #############################
+
+#        beam.vz=-beam.vz
 
 
-        print (np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
+        v=Vector(beam.vx,beam.vy,beam.vz)
+        normal=v.plane_normal()
+        normal.normalization()
+        vperp=v.perpendicular_component(normal)
+        v2=v.sum(vperp)
+        v2=v2.sum(vperp)
+
+        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
+        ###########################################################
+
         self.rotation_to_the_screen(beam)
-        print (np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
 
 
         self.translation_to_the_screen(beam)
@@ -192,28 +172,32 @@ class Optical_element(object):
 
         self.intersection_with_spherical_mirror(beam)
 
-
         beam.plot_yx()
+        plt.title("footprint")
 
 
+        # effect of the spherical mirror ##########################
 
+        position=Vector(beam.x,beam.y,beam.z)
+        normal=position.spherical_normal(self.R)
+        normal.normalization()
+        v=Vector(beam.vx,beam.vy,beam.vz)
+        vperp=v.perpendicular_component(normal)
+        v2=v.sum(vperp)
+        v2=v2.sum(vperp)
 
-        for i in range(0,beam.N):
-            normal  = np.array([2*beam.x[i], 2*beam.y[i], 2*beam.z[i]-2*self.R])
-            normal  = normalization3d(normal)
-            vector  = [beam.vx[i],beam.vy[i],beam.vz[i]]
-            vperp   = -np.dot(vector, normal)*normal
-            vparall = vector+vperp
-            [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
+        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
+        ###########################################################
+
 
         self.rotation_to_the_screen(beam)
 
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
 
-
-
         return beam
+
+
 
 
 

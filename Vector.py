@@ -13,14 +13,6 @@ def normalization3d(v):
     return v
 
 
-def moltiplication_beetween_matrix_and_array(a,b):
-    (ra,ca)=a.shape
-    c=np.zeros((ra))
-    for i in range(0,ra):
-        c[i]=np.dot(a[i,:],b)
-    return c
-
-
 
 
 class Vector(object):
@@ -59,8 +51,6 @@ class Vector(object):
 
 
 
-
-
     def rotation(self,alpha,axis="x"):
         """
         rotate a vector an angle alpha
@@ -76,6 +66,73 @@ class Vector(object):
             self.rotation_y(angle)
         elif axis=="z":
             self.rotation_z(angle)
+
+    def plane_normal(self):
+        normal=Vector(self.x,self.y,self.z)
+        normal.x=0*self.x
+        normal.y=0*self.y
+        normal.z=1*self.z
+
+        return normal
+
+
+    def spherical_normal(self,R):
+        normal=Vector(self.x,self.y,self.z)
+        normal.x=2*self.x
+        normal.y=2*self.y
+        normal.z=2*self.z-2*R
+
+        return normal
+
+
+    def normalization(self):
+        mod=np.sqrt(self.x**2+self.y**2+self.z**2)
+        self.x = self.x / mod
+        self.y = self.y / mod
+        self.z = self.z / mod
+
+    def dot(self,v2):
+        dot = np.array(self.x*v2.x+self.y*v2.y+self.z*v2.z)
+        return dot
+
+    def perpendicular_component(self,normal):
+        a=-self.dot(normal)
+        normal.x=normal.x*a
+        normal.y=normal.y*a
+        normal.z=normal.z*a
+        return normal
+
+    def sum(self,v2):
+        sum = Vector(self.x,self.y,self.z)
+        sum.x = self.x+v2.x
+        sum.y = self.y+v2.y
+        sum.z = self.z+v2.z
+
+        return sum
+
+    def after_reflection(self,v2):
+        after_reflection = Vector(self.x,self.y,self.z)
+        after_reflection = self.sum(v2)
+
+        return after_reflection
+
+
+
+
+
+
+
+#        for i in range(0,beam.N):
+#            normal  = Vector(2*beam.x, 2*beam.y, 2*beam.z-2*self.R)
+#            normal  = normalization3d(normal)
+#            vector  = [beam.vx[i],beam.vy[i],beam.vz[i]]
+#            vperp   = -np.dot(vector, normal)*normal
+#            vparall = vector+vperp
+#            [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
+
+
+
+
 
     def info(self):
         return "x: %f, y: %f, z: %f\n"%(self.x,self.y,self.z)
