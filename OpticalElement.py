@@ -2,9 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Vector import Vector
-from numpy import pi
 
-from Vector import normalization3d
 
 class Optical_element(object):
 
@@ -49,11 +47,11 @@ class Optical_element(object):
             self.alpha = alpha
             self.R=R
 
-    def reflection(self, beam):
+    def trace_optical_element(self, beam):
         if self.type == "Plane mirror":
-            beam_out = self.reflection_plane_mirror(beam)
+            beam_out = self.trace_plane_mirror(beam)
         elif self.type == "Spherical mirror":
-            beam_out = self.reflection_spherical_mirror(beam)
+            beam_out = self.trace_spherical_mirror(beam)
         else:
             raise NotImplemented("Surface not valid")
 
@@ -95,8 +93,6 @@ class Optical_element(object):
 
 
 
-
-
     def translation_to_the_screen(self,beam):
         beam.y=beam.y-self.q
 
@@ -121,6 +117,22 @@ class Optical_element(object):
             beam.y = beam.y+beam.vy*t
             beam.z = beam.z+beam.vz*t
 
+    def output_direction(self, beam):
+
+        position=Vector(beam.x,beam.y,beam.z)
+        if self.type == "Plane mirror":
+            normal=position.spherical_normal(self.R)
+        elif self.type == "Spherical mirror":
+            normal=position.spherical_normal(self.R)
+        normal.normalization()
+        velocity=Vector(beam.vx,beam.vy,beam.vz)
+        vperp=velocity.perpendicular_component(normal)
+        v2=velocity.sum(vperp)
+        v2=v2.sum(vperp)
+
+        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
+
+
 
 
     def intersection_with_the_screen(self,beam):
@@ -131,9 +143,18 @@ class Optical_element(object):
 
 
 
-    def reflection_plane_mirror(self, beam):
+    def trace_plane_mirror(self, beam):
+
+        #
+        # change beam to o.e. frame
+        #
         self.rotation(beam)
         self.translation(beam)
+
+
+        #
+        # intersection and output direction
+        #
         self.intersection_with_plane_mirror(beam)
 
         beam.plot_yx()
@@ -154,44 +175,45 @@ class Optical_element(object):
         [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
         ###########################################################
 
+        #
+        # from o.e. frame to image frame
+        #
+
         self.rotation_to_the_screen(beam)
-
-
         self.translation_to_the_screen(beam)
-
         self.intersection_with_the_screen(beam)
 
 
 
         return beam
 
-    def reflection_spherical_mirror(self, beam):
+    def trace_spherical_mirror(self, beam):
 
         self.rotation(beam)
         self.translation(beam)
-
         self.intersection_with_spherical_mirror(beam)
 
         beam.plot_yx()
         plt.title("footprint")
 
+        self.output_direction(beam)
 
-        # effect of the spherical mirror ##########################
 
-        position=Vector(beam.x,beam.y,beam.z)
-        normal=position.spherical_normal(self.R)
-        normal.normalization()
-        v=Vector(beam.vx,beam.vy,beam.vz)
-        vperp=v.perpendicular_component(normal)
-        v2=v.sum(vperp)
-        v2=v2.sum(vperp)
-
-        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
-        ###########################################################
+#        # effect of the spherical mirror ##########################
+#
+#        position=Vector(beam.x,beam.y,beam.z)
+#        normal=position.spherical_normal(self.R)
+#        normal.normalization()
+#        v=Vector(beam.vx,beam.vy,beam.vz)
+#        vperp=v.perpendicular_component(normal)
+#        v2=v.sum(vperp)
+#        v2=v2.sum(vperp)
+#
+#        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
+#        ###########################################################
 
 
         self.rotation_to_the_screen(beam)
-
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
 
