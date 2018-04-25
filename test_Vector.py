@@ -7,6 +7,7 @@ from numpy.testing import assert_almost_equal
 
 
 def test_rotation_1():
+    print(">> test_rotation_1")
     theta=0
     v = Vector(0,1,0)
     v.rotation(-(90-theta),"x")
@@ -17,6 +18,7 @@ def test_rotation_1():
 
 
 def test_rotation_2():
+    print(">> test_rotation_2")
     theta=45
     v = Vector(0,1,0)
     v.rotation(-(90-theta),"x")
@@ -27,6 +29,7 @@ def test_rotation_2():
 
 
 def test_rotation_3():
+    print(">> test_rotation_3")
     alpha=90
     v = Vector(0,1,0)
     v.rotation(alpha,"y")
@@ -36,6 +39,7 @@ def test_rotation_3():
     assert_almost_equal ( v.z , 0.0 , 15)
 
 def test_rotation_4():
+    print(">> test_rotation_4")
     theta = 45
     alpha = 90
     v = Vector(0, 1, 0)
@@ -48,6 +52,7 @@ def test_rotation_4():
 
 
 def test_rodrigues():
+    print(">> test_rodrigues")
     theta=90
     axis=Vector(0,0,1)
     v=Vector(0,1,0)
@@ -58,6 +63,7 @@ def test_rodrigues():
     assert_almost_equal(vrot.z, 0, 15)
 
 def test_rotation_10_array():
+    print(">> test_rotation_10_array")
     theta = 45
     alpha = 90
     x=np.zeros(10)
@@ -66,6 +72,7 @@ def test_rotation_10_array():
     v=Vector(x,y,z)
     v.rotation(alpha,"y")
     v.rotation(-(90 - theta), "x")
+    print (v.info())
 
     assert_almost_equal(v.x,np.zeros(10))
     assert_almost_equal(v.y,1/np.sqrt(2) *np.ones(10))
@@ -73,6 +80,7 @@ def test_rotation_10_array():
 
 
 def test_sum_vector():
+    print(">> test_sum_vector")
     v=Vector(0.,1.,0.)
     v2=v.sum(v)
 
@@ -82,6 +90,7 @@ def test_sum_vector():
     assert_almost_equal(v2.z, 0., 15)
 
 def test_sum_list_vector():
+    print(">> test_sum_list_vector")
 
     x=np.zeros(10)
     y=np.ones(10)
@@ -94,6 +103,7 @@ def test_sum_list_vector():
 
 
 def test_dot_product_vector():
+    print(">> test_dot_product_vector")
     v=Vector(0.,1.,0.)
     dot_product=v.dot(v)
 
@@ -102,7 +112,7 @@ def test_dot_product_vector():
 
 
 def test_normalizationvector():
-
+    print(">> test_normalizationvector")
     x=1
     y=1
     z=1
@@ -115,6 +125,7 @@ def test_normalizationvector():
 
 
 def test_normalization_list_vector():
+    print(">> test_normalization_list_vector")
     x = np.ones(10)
     y = np.ones(10)
     z = np.ones(10)

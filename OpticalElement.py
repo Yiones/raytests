@@ -40,6 +40,16 @@ class Optical_element(object):
 
         return spherical_mirror
 
+    def set_spherical_mirror_radius_from_focal_distances(self,p=None,q=None,theta=None):
+        if p is None:
+            p = self.p
+        if q is None:
+            q = self.q
+        if theta is None:
+            theta = self.theta
+
+        self.R = 2 * p * q / (p + q) / np.cos(theta * np.pi / 180)
+
     def set_parameters(self,p,q,theta,alpha,R=0):
             self.p = p
             self.q = q
@@ -47,19 +57,9 @@ class Optical_element(object):
             self.alpha = alpha
             self.R=R
 
-    def trace_optical_element(self, beam):
-        if self.type == "Plane mirror":
-            beam_out = self.trace_plane_mirror(beam)
-        elif self.type == "Spherical mirror":
-            beam_out = self.trace_spherical_mirror(beam)
-        else:
-            raise NotImplemented("Surface not valid")
-
-        return beam_out
 
 
-
-    def rotation(self, beam):                               # rotation along x axis of an angle depending on theta, and along y with an angle tetha
+    def rotation_to_the_optical_element(self, beam):                               # rotation along x axis of an angle depending on theta, and along y with an angle tetha
 
         position = Vector(beam.x,beam.y,beam.z)
         velocity = Vector(beam.vx,beam.vy,beam.vz)
@@ -72,7 +72,7 @@ class Optical_element(object):
 
 
 
-    def translation(self,beam):
+    def translation_to_the_optical_element(self, beam):
         vector_point=Vector(0,self.p,0)
         vector_point.rotation(self.alpha,"y")
         vector_point.rotation(-(90-self.theta),"x")
@@ -117,13 +117,15 @@ class Optical_element(object):
             beam.y = beam.y+beam.vy*t
             beam.z = beam.z+beam.vz*t
 
-    def output_direction(self, beam):
+    def output_direction_from_optical_element(self, beam):
 
         position=Vector(beam.x,beam.y,beam.z)
+
         if self.type == "Plane mirror":
-            normal=position.spherical_normal(self.R)
+            normal=position.plane_normal()
         elif self.type == "Spherical mirror":
             normal=position.spherical_normal(self.R)
+
         normal.normalization()
         velocity=Vector(beam.vx,beam.vy,beam.vz)
         vperp=velocity.perpendicular_component(normal)
@@ -131,7 +133,6 @@ class Optical_element(object):
         v2=v2.sum(vperp)
 
         [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
-
 
 
 
@@ -143,84 +144,32 @@ class Optical_element(object):
 
 
 
-    def trace_plane_mirror(self, beam):
+    def intersection_with_optical_element(self, beam):
+        if self.type == "Plane mirror":
+            self.intersection_with_plane_mirror(beam)
+        elif self.type == "Spherical mirror":
+            self.intersection_with_spherical_mirror(beam)
 
+
+    def trace_optical_element(self, beam1):
+
+        beam=beam1.duplicate()
         #
         # change beam to o.e. frame
         #
-        self.rotation(beam)
-        self.translation(beam)
+        self.rotation_to_the_optical_element(beam)
+        self.translation_to_the_optical_element(beam)
 
-
-        #
-        # intersection and output direction
-        #
-        self.intersection_with_plane_mirror(beam)
+        self.intersection_with_optical_element(beam)
 
         beam.plot_yx()
         plt.title("footprint")
 
-        # effect of the plane mirror #############################
-
-#        beam.vz=-beam.vz
-
-
-        v=Vector(beam.vx,beam.vy,beam.vz)
-        normal=v.plane_normal()
-        normal.normalization()
-        vperp=v.perpendicular_component(normal)
-        v2=v.sum(vperp)
-        v2=v2.sum(vperp)
-
-        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
-        ###########################################################
-
-        #
-        # from o.e. frame to image frame
-        #
+        self.output_direction_from_optical_element(beam)
 
         self.rotation_to_the_screen(beam)
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
 
 
-
         return beam
-
-    def trace_spherical_mirror(self, beam):
-
-        self.rotation(beam)
-        self.translation(beam)
-        self.intersection_with_spherical_mirror(beam)
-
-        beam.plot_yx()
-        plt.title("footprint")
-
-        self.output_direction(beam)
-
-
-#        # effect of the spherical mirror ##########################
-#
-#        position=Vector(beam.x,beam.y,beam.z)
-#        normal=position.spherical_normal(self.R)
-#        normal.normalization()
-#        v=Vector(beam.vx,beam.vy,beam.vz)
-#        vperp=v.perpendicular_component(normal)
-#        v2=v.sum(vperp)
-#        v2=v2.sum(vperp)
-#
-#        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
-#        ###########################################################
-
-
-        self.rotation_to_the_screen(beam)
-        self.translation_to_the_screen(beam)
-        self.intersection_with_the_screen(beam)
-
-        return beam
-
-
-
-
-
-

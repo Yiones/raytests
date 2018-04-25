@@ -6,11 +6,9 @@ from numpy.testing import assert_almost_equal
 
 def test_plane_mirror():
 
-    beam1=Beam()
+    beam1=Beam(5000)
     beam1.set_point(0,0,0)
-    #beam1.set_gaussian_divergence(0.001,0.0001)
     beam1.set_flat_divergence(5e-3,5e-2)
-
 
 
     p=1.
@@ -19,7 +17,7 @@ def test_plane_mirror():
     alpha=0
     plane_mirror=Optical_element.initialize_as_plane_mirror(p,q,theta,alpha)
 
-    beam1=plane_mirror.reflection(beam1)
+    beam1=plane_mirror.trace_optical_element(beam1)
     beam1.plot_xz()
 
     beam1.plot_xpzp()
@@ -29,29 +27,26 @@ def test_plane_mirror():
 
 def test_spherical_mirror():
 
-    beam1=Beam()
+    beam1=Beam(5000)
     beam1.set_point(0,0,0)
-    #beam1.set_gaussian_divergence(0.001,0.0001)
     beam1.set_flat_divergence(5e-3,5e-2)
 
-
-
-    p=1.
+    p=2.
     q=1.
-    theta=0
+    theta=30
     alpha=0
-    R=1
-    spherical_mirror=Optical_element.initialize_as_spherical_mirror(p,q,theta,alpha,R)
 
-    beam1=spherical_mirror.reflection(beam1)
+    spherical_mirror=Optical_element.initialize_as_spherical_mirror(p,q,theta,alpha,0.0)
+    spherical_mirror.set_spherical_mirror_radius_from_focal_distances()
+
+
+
+    beam1=spherical_mirror.trace_optical_element(beam1)
     beam1.plot_xz()
 
     beam1.plot_xpzp()
     plt.show()
 
-
-    assert_almost_equal(beam1.x[(np.random.randint(beam1.N))],0.0,15)
-    assert_almost_equal(beam1.y[(np.random.randint(beam1.N))],0.0,15)
-    assert_almost_equal(beam1.z[(np.random.randint(beam1.N))],0.0,15)
-
-
+    assert_almost_equal(np.abs(beam1.x).mean(),0.0,2)
+    assert_almost_equal(np.abs(beam1.y).mean(),0.0,2)
+    assert_almost_equal(np.abs(beam1.z).mean(),0.0,2)

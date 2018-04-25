@@ -2,49 +2,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import pi
 
-def normalization3d(v):
-    mod=np.sqrt(v[0]**2+v[1]**2+v[2]**2)
-    if mod==0:
-        v[0]=0
-        v[1]=0
-        v[2]=0
-    else:
-        v=v/mod
-    return v
-
-
-
-
 class Vector(object):
 
     def __init__(self,x,y,z):
 
-        self.x = x
-        self.y = y
-        self.z = z
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.z = np.array(z)
 
+
+    def duplicate(self):
+        return Vector(self.x,self.y,self.z)
+
+    def size(self):
+        return self.x.size
 
     def rotation_x(self,alpha):
-        x=self.x
-        y=self.y
-        z=self.z
+        x=self.x.copy()
+        y=self.y.copy()
+        z=self.z.copy()
         self.x = x
         self.y = y*np.cos(alpha)-z*np.sin(alpha)
         self.z = y*np.sin(alpha)+z*np.cos(alpha)
 
     def rotation_y(self,beta):
-        x=self.x
-        y=self.y
-        z=self.z
+        x=self.x.copy()
+        y=self.y.copy()
+        z=self.z.copy()
         self.x = x*np.cos(beta)+z*np.sin(beta)
         self.y = y
         self.z = -x*np.sin(beta)+z*np.cos(beta)
 
 
     def rotation_z(self,gamma):
-        x=self.x
-        y=self.y
-        z=self.z
+        x=self.x.copy()
+        y=self.y.copy()
+        z=self.z.copy()
         self.x = x*np.cos(gamma)-y*np.sin(gamma)
         self.y = x*np.sin(gamma)+y*np.cos(gamma)
         self.z = z
@@ -68,19 +61,14 @@ class Vector(object):
             self.rotation_z(angle)
 
     def plane_normal(self):
-        normal=Vector(self.x,self.y,self.z)
-        normal.x=0*self.x
-        normal.y=0*self.y
-        normal.z=1*self.z
-
-        return normal
+        return Vector(np.zeros(self.size()),np.zeros(self.size()),np.ones(self.size()))
 
 
     def spherical_normal(self,R):
-        normal=Vector(self.x,self.y,self.z)
-        normal.x=2*self.x
-        normal.y=2*self.y
-        normal.z=2*self.z-2*R
+        normal=Vector(
+                        2*self.x,
+                        2*self.y,
+                        2*self.z-2*R )
 
         return normal
 
@@ -92,49 +80,41 @@ class Vector(object):
         self.z = self.z / mod
 
     def dot(self,v2):
-        dot = np.array(self.x*v2.x+self.y*v2.y+self.z*v2.z)
-        return dot
+        return np.array(self.x*v2.x+self.y*v2.y+self.z*v2.z)
 
     def perpendicular_component(self,normal):
         a=-self.dot(normal)
-        normal.x=normal.x*a
-        normal.y=normal.y*a
-        normal.z=normal.z*a
-        return normal
+        return Vector(
+            normal.x*a,
+            normal.y*a,
+            normal.z*a)
 
     def sum(self,v2):
-        sum = Vector(self.x,self.y,self.z)
-        sum.x = self.x+v2.x
-        sum.y = self.y+v2.y
-        sum.z = self.z+v2.z
-
-        return sum
-
-    def after_reflection(self,v2):
-        after_reflection = Vector(self.x,self.y,self.z)
-        after_reflection = self.sum(v2)
-
-        return after_reflection
+        return Vector(  self.x+v2.x,
+                        self.y+v2.y,
+                        self.z+v2.z)
 
 
+    def rodrigues_formula(self,axis1,theta):
+        axis = axis1.duplicate()
+        axis.normalization()
+        theta=theta*pi/180
+        vrot=Vector(self.x,self.y,self.z)
+        vrot.x=self.x*np.cos(theta)+( axis.y*self.z-axis.z*self.y)*np.sin(theta)+(1-np.cos(theta))*axis.x**2*self.x
+        vrot.y=self.y*np.cos(theta)+(-axis.x*self.z+axis.z*self.x)*np.sin(theta)+(1-np.cos(theta))*axis.y**2*self.y
+        vrot.z=self.z*np.cos(theta)+( axis.x*self.y-axis.y*self.x)*np.sin(theta)+(1-np.cos(theta))*axis.z**2*self.z
 
-
-
-
-
-#        for i in range(0,beam.N):
-#            normal  = Vector(2*beam.x, 2*beam.y, 2*beam.z-2*self.R)
-#            normal  = normalization3d(normal)
-#            vector  = [beam.vx[i],beam.vy[i],beam.vz[i]]
-#            vperp   = -np.dot(vector, normal)*normal
-#            vparall = vector+vperp
-#            [beam.vx[i], beam.vy[i], beam.vz[i]] = vperp+vparall
-
-
+        return vrot
 
 
 
     def info(self):
-        return "x: %f, y: %f, z: %f\n"%(self.x,self.y,self.z)
+        if self.size() == 1:
+            return "x: %f, y: %f, z: %f\n"%(self.x,self.y,self.z)
+        else:
+            txt = ""
+            for i in range(self.size()):
+                txt += "x: %f, y: %f, z: %f\n"%(self.x[i],self.y[i],self.z[i])
+            return txt
 
 

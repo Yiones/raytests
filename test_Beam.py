@@ -25,21 +25,3 @@ def test_duplicate():
     assert_almost_equal(b1.vy,b2.vy,9)
     assert_almost_equal(b1.vz,b2.vz,9)
 
-
-def test_my_beam():
-
-    dx=1e-3
-    dz=1e-2
-    p0=1         #square spot size
-    p1=1         #gaussian velocity distribution
-
-    beam=Beam.initialize_mysource(dx,dz,p0,p1)
-    beam.plot_xz()
-
-    print(np.mean(beam.vx))
-    print(np.mean(beam.vz))
-
-    assert_almost_equal(np.mean(beam.vx),0.0,3)
-    assert_almost_equal(np.mean(beam.vz),0.0,3)
-
-    plt.show()
