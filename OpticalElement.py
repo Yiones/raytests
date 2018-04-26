@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from Vector import Vector
@@ -19,12 +20,13 @@ class Optical_element(object):
             self.ccc = np.zeros(10)
 
 
-    def set_parameters(self,p,q,theta,alpha=0,R=0):
+    def set_parameters(self,p,q,theta,alpha,R=0):
             self.p = p
             self.q = q
             self.theta = theta
             self.alpha = alpha
             self.R=R
+
 
 
     @classmethod
@@ -161,13 +163,12 @@ class Optical_element(object):
         self.ccc[9 - 1] = - self.ccc[9 - 1]
 
 
-    def set_sphere_from_focal_distances(self, ssour, simag, theta_grazing):  # ssour = p, simag = q
+    def set_sphere_from_focal_distances(self, ssour, simag, theta):  # ssour = p, simag = q
         self.p=ssour
         self.q=simag
-        self.theta=theta_grazing
+        self.theta=theta
 
         # todo: implement also sagittal bending
-        theta = (np.pi / 2) - theta_grazing
         print('>>>> set_sphere_from_focal_distances: Angle with respect to the surface normal [rad]:', theta)
         rmirr = ssour * simag * 2 / np.cos(theta) / (ssour + simag)
         self.ccc[1 - 1] = 1.0  # X^2  # = 0 in cylinder case
@@ -180,6 +181,7 @@ class Optical_element(object):
         self.ccc[8 - 1] = .0  # Y
         self.ccc[9 - 1] = -2 * rmirr  # Z
         self.ccc[10 - 1] = .0  # G
+        print(self.ccc)
         print(">>>> set_sphere_from_focal_distances: Spherical radius: %f \n" % (rmirr))
 
 
@@ -196,10 +198,11 @@ class Optical_element(object):
         self.ccc[10 - 1] = .0  # G
 
 
-    def set_ellipsoid_from_focal_distances(self, ssour, simag, theta_grazing):
+    def set_ellipsoid_from_focal_distances(self, ssour, simag, theta):
+        self.p=ssour
+        self.q=simag
+        self.theta=theta
 
-
-        theta = (np.pi / 2) - theta_grazing
         COSTHE = np.cos(theta)
         SINTHE = np.sin(theta)
         AXMAJ = (ssour + simag) / 2
@@ -258,13 +261,18 @@ class Optical_element(object):
         self.ccc[8] = 2 * (B * YCEN * RNCEN[2 - 1] + C * ZCEN * RNCEN[3 - 1])
         self.ccc[9] = 0.0
 
+        print("The major axis is %f \nThe minor axis is %f" %(AXMAJ,AXMIN))
 
-    def set_paraboloid_from_focal_distances(self, SSOUR, SIMAG, theta_grazing):
+
+    def set_paraboloid_from_focal_distances(self, SSOUR, SIMAG, theta):
+
+        self.p=SSOUR
+        self.q=SIMAG
+        self.theta=theta
 
         # ;C
         # ;C Computes the parabola
         # ;C
-        theta = (np.pi / 2) - theta_grazing
         COSTHE = np.cos(theta)
         SINTHE = np.sin(theta)
         if SSOUR < SIMAG:
@@ -292,9 +300,12 @@ class Optical_element(object):
         self.ccc[9] = 0.0
 
 
-    def set_hyperboloid_from_focal_distances(self, SSOUR, SIMAG, theta_grazing):
+    def set_hyperboloid_from_focal_distances(self, SSOUR, SIMAG, theta):
 
-        theta = (np.pi / 2) - theta_grazing
+        self.p=SSOUR
+        self.q=SIMAG
+        self.theta=theta
+
         COSTHE = np.cos(theta)
         SINTHE = np.sin(theta)
         AXMAJ = (SSOUR - SIMAG) / 2
@@ -388,7 +399,7 @@ class Optical_element(object):
         if theta is None:
             theta = self.theta
 
-        self.R = 2 * p * q / (p + q) / np.cos(theta * np.pi / 180)
+        self.R = 2 * p * q / (p + q) / np.cos(theta)
 
 
 
@@ -430,7 +441,7 @@ class Optical_element(object):
         beam.y=beam.y-self.q
 
 
-    def intersection_with_plane_mirror(self,beam, bound):
+    def intersection_with_plane_mirror(self,beam,bound):
         t=-beam.z/beam.vz
         beam.x = beam.x+beam.vx*t
         beam.y = beam.y+beam.vy*t
@@ -443,35 +454,30 @@ class Optical_element(object):
 
 
     def intersection_with_spherical_mirror(self,beam,bound):
-        a=beam.vx**2+beam.vy**2+beam.vz**2
-        b=beam.x*beam.vx+beam.y*beam.vy+beam.z*beam.vz-beam.vz*self.R                             #This is not b but b/2
-        c=beam.x**2+beam.y**2+beam.z**2-2*beam.z*self.R
-        t=(-b+np.sqrt(b**2-4*a*c))/(a)
-        print(a,b,c,t)
-        if t[0]>=0:
-            t=t
-        else:
-            t=(-b-np.sqrt(b**2-a*c))/a
-        beam.x = beam.x+beam.vx*t
-        beam.y = beam.y+beam.vy*t
-        beam.z = beam.z+beam.vz*t
+            a=beam.vx**2+beam.vy**2+beam.vz**2
+            b=beam.x*beam.vx+beam.y*beam.vy+beam.z*beam.vz-beam.vz*self.R                             #This is not b but b/2
+            c=beam.x**2+beam.y**2+beam.z**2-2*beam.z*self.R
+            t=(-2*b+np.sqrt(4*b**2-4*a*c))/(2*a)
+            if t[0]>=0:
+                t=t
+            else:
+                t=(-b-np.sqrt(b**2-a*c))/a
 
-        beam.flag=beam.flag+(np.sign(bound.R**2*np.ones(beam.N)-beam.x**2-beam.y**2)-1)/2
-        beam.flag=np.sign(beam.flag)
+            beam.x = beam.x+beam.vx*t
+            beam.y = beam.y+beam.vy*t
+            beam.z = beam.z+beam.vz*t
+
+            beam.flag=beam.flag+(np.sign(bound.R**2*np.ones(beam.N)-beam.x**2-beam.y**2)-1)/2
+            beam.flag=np.sign(beam.flag)
 
 
 
     def intersection_with_surface_conic(self,beam):
         a=self.ccc[1-1]*beam.vx**2+self.ccc[2-1]*beam.vy**2+self.ccc[3-1]*beam.vz**2+self.ccc[4-1]*beam.vx*beam.vy+self.ccc[5-1]*beam.vy*beam.vz+self.ccc[6-1]*beam.vx*beam.vz
-        print ("the value of a is:    ")
-        print (a)
-        b=2*self.ccc[1-1]*beam.x*beam.vx+2*self.ccc[2-1]*beam.y*beam.vy+2*self.ccc[3-1]*beam.z*beam.vz+self.ccc[4-1]*beam.x*beam.vy+self.ccc[4-1]*beam.y*beam.vx+self.ccc[5-1]*beam.y*beam.vz+self.ccc[5-1]*beam.z*beam.vy+self.ccc[6-1]*beam.x*beam.vz+self.ccc[6-1]*beam.y*beam.vx+self.ccc[7-1]*beam.vx+self.ccc[8-1]*beam.vy+self.ccc[9-1]*beam.vz
-        print ("the value of b is:    ")
-        print (b)
+        b=2*self.ccc[1-1]*beam.x*beam.vx+2*self.ccc[2-1]*beam.y*beam.vy+2*self.ccc[3-1]*beam.z*beam.vz+self.ccc[4-1]*beam.x*beam.vy+self.ccc[4-1]*beam.y*beam.vx+self.ccc[5-1]*beam.y*beam.vz+self.ccc[5-1]*beam.z*beam.vy+self.ccc[6-1]*beam.x*beam.vz+self.ccc[6-1]*beam.z*beam.vx+self.ccc[7-1]*beam.vx+self.ccc[8-1]*beam.vy+self.ccc[9-1]*beam.vz
         c=self.ccc[1-1]*beam.x**2+self.ccc[2-1]*beam.y**2+self.ccc[3-1]*beam.z**2+self.ccc[4-1]*beam.x*beam.y+self.ccc[5-1]*beam.y*beam.z+self.ccc[6-1]*beam.x*beam.z+self.ccc[7-1]*beam.x+self.ccc[8-1]*beam.y+self.ccc[9-1]*beam.z+self.ccc[10-1]
-        print ("the value of c is:    ")
-        print (c)
-        t=-(b+np.sqrt(b**2-4*a*c))/(2*a)
+
+        t=(-b+np.sqrt(b**2-4*a*c))/(2*a)
         if t[0]>=0:
             t=t
         else:
@@ -479,7 +485,6 @@ class Optical_element(object):
         beam.x = beam.x+beam.vx*t
         beam.y = beam.y+beam.vy*t
         beam.z = beam.z+beam.vz*t
-
 
 
 
@@ -493,6 +498,7 @@ class Optical_element(object):
             normal=position.spherical_normal(self.R)
 
         normal.normalization()
+
         velocity=Vector(beam.vx,beam.vy,beam.vz)
         vperp=velocity.perpendicular_component(normal)
         v2=velocity.sum(vperp)
@@ -532,19 +538,26 @@ class Optical_element(object):
         plt.title("footprint")
 
         self.output_direction_from_optical_element(beam)
+        print(np.mean(beam.x**2),np.mean(beam.y**2),np.mean(beam.z**2))
+        print(np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
+
 
         self.rotation_to_the_screen(beam)
+
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
 
 
+
         return beam
+
 
     def trace_surface_conic(self,beam):
 
         beam=beam.duplicate()
         self.rotation_to_the_optical_element(beam)
         self.translation_to_the_optical_element(beam)
+
 
         self.intersection_with_surface_conic(beam)
 
@@ -567,12 +580,5 @@ class Optical_element(object):
         self.rotation_to_the_screen(beam)
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
-
         return beam
-
-
-
-
-
-
 

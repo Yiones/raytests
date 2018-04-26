@@ -44,7 +44,7 @@ class Vector(object):
 
 
 
-    def rotation(self,alpha,axis="x"):
+    def rotation(self,angle,axis="x"):
         """
         rotate a vector an angle alpha
         :param alpha: rotation angle in degrees (counterclockwise)
@@ -52,7 +52,6 @@ class Vector(object):
         :return:
         """
 
-        angle=pi/180.0*alpha
         if axis == "x":
             self.rotation_x(angle)
         elif axis=="y":
@@ -71,6 +70,16 @@ class Vector(object):
                         2*self.z-2*R )
 
         return normal
+
+    def surface_conic_normal(self,ccc):
+
+        x=2*ccc[1-1]*self.x+ccc[4-1]*self.y+ccc[6-1]*self.z+ccc[7-1]
+        y=2*ccc[2-1]*self.y+ccc[4-1]*self.x+ccc[5-1]*self.z+ccc[8-1]
+        z=2*ccc[3-1]*self.z+ccc[5-1]*self.y+ccc[6-1]*self.x+ccc[9-1]
+
+        return Vector(x,y,z)
+
+
 
 
     def normalization(self):
@@ -98,7 +107,6 @@ class Vector(object):
     def rodrigues_formula(self,axis1,theta):
         axis = axis1.duplicate()
         axis.normalization()
-        theta=theta*pi/180
         vrot=Vector(self.x,self.y,self.z)
         vrot.x=self.x*np.cos(theta)+( axis.y*self.z-axis.z*self.y)*np.sin(theta)+(1-np.cos(theta))*axis.x**2*self.x
         vrot.y=self.y*np.cos(theta)+(-axis.x*self.z+axis.z*self.x)*np.sin(theta)+(1-np.cos(theta))*axis.y**2*self.y
