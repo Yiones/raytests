@@ -70,15 +70,15 @@ class Optical_element(object):
     #
 
     @classmethod
-    def initialize_as_sphere_from_focal_distances(cls, p, q, theta1, cylindrical=0, cylangle=0.0,
+    def initialize_as_sphere_from_focal_distances(cls, p, q, theta, cylindrical=0, cylangle=0.0,
                                                   switch_convexity=0):
         oe=Optical_element()
         oe.p=p
         oe.q=q
-        oe.theta=np.pi/2-theta1
+        oe.theta=theta
         oe.type="Surface conical mirror"
         oe.ccc_object = SurfaceConic()
-        oe.ccc_object.set_sphere_from_focal_distances(p, q, theta1)
+        oe.ccc_object.set_sphere_from_focal_distances(p, q, np.pi/2-theta)
         if cylindrical:
             oe.ccc_object.set_cylindrical(cylangle)
         if switch_convexity:
@@ -87,15 +87,15 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_as_ellipsoid_from_focal_distances(cls, p, q, theta1, cylindrical=0, cylangle=0.0,
+    def initialize_as_ellipsoid_from_focal_distances(cls, p, q, theta, cylindrical=0, cylangle=0.0,
                                                      switch_convexity=0):
         oe=Optical_element()
         oe.p=p
         oe.q=q
-        oe.theta=np.pi/2-theta1
+        oe.theta=theta
         oe.type="Surface conical mirror"
         oe.ccc_object = SurfaceConic()
-        oe.ccc_object.set_ellipsoid_from_focal_distances(p, q, theta1)
+        oe.ccc_object.set_ellipsoid_from_focal_distances(p, q, np.pi/2-theta)
         if cylindrical:
             oe.ccc_object.set_cylindrical(cylangle)
         if switch_convexity:
@@ -104,15 +104,15 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_as_paraboloid_from_focal_distances(cls, p, q, theta1, cylindrical=0, cylangle=0.0,
+    def initialize_as_paraboloid_from_focal_distances(cls, p, q, theta, cylindrical=0, cylangle=0.0,
                                                       switch_convexity=0):
         oe=Optical_element()
         oe.p=p
         oe.q=q
-        oe.theta=np.pi/2-theta1
+        oe.theta=theta
         oe.type="Surface conical mirror"
         oe.ccc_object = SurfaceConic()
-        oe.ccc_object.set_paraboloid_from_focal_distances(p, q, theta1)
+        oe.ccc_object.set_paraboloid_from_focal_distances(p, q, np.pi/2-theta)
         if cylindrical:
             oe.ccc_object.set_cylindrical(cylangle)
         if switch_convexity:
@@ -121,15 +121,15 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_as_hyperboloid_from_focal_distances(cls, p, q, theta1, cylindrical=0, cylangle=0.0,
+    def initialize_as_hyperboloid_from_focal_distances(cls, p, q, theta, cylindrical=0, cylangle=0.0,
                                                        switch_convexity=0):
         oe=Optical_element()
         oe.p=p
         oe.q=q
-        oe.theta=np.pi/2-theta1
+        oe.theta=theta
         oe.type="Surface conical mirror"
         oe.ccc_object = SurfaceConic()
-        oe.ccc_object.set_hyperboloid_from_focal_distances(p, q, theta1)
+        oe.ccc_object.set_hyperboloid_from_focal_distances(p, q, np.pi/2-theta)
         if cylindrical:
             oe.ccc_object.set_cylindrical(cylangle)
         if switch_convexity:
@@ -209,24 +209,6 @@ class Optical_element(object):
             beam.flag=np.sign(beam.flag)
 
 
-
-#    def intersection_with_surface_conic(self,beam):
-#        ccc=self.ccc_object.get_coefficients()
-#        print(ccc)
-#        a=ccc[1-1]*beam.vx**2+ccc[2-1]*beam.vy**2+ccc[3-1]*beam.vz**2+ccc[4-1]*beam.vx*beam.vy+ccc[5-1]*beam.vy*beam.vz+ccc[6-1]*beam.vx*beam.vz
-#        b=2*ccc[1-1]*beam.x*beam.vx+2*ccc[2-1]*beam.y*beam.vy+2*ccc[3-1]*beam.z*beam.vz+ccc[4-1]*beam.x*beam.vy+ccc[4-1]*beam.y*beam.vx+ccc[5-1]*beam.y*beam.vz+ccc[5-1]*beam.z*beam.vy+ccc[6-1]*beam.x*beam.vz+ccc[6-1]*beam.z*beam.vx+ccc[7-1]*beam.vx+ccc[8-1]*beam.vy+ccc[9-1]*beam.vz
-#        c=ccc[1-1]*beam.x**2+ccc[2-1]*beam.y**2+ccc[3-1]*beam.z**2+ccc[4-1]*beam.x*beam.y+ccc[5-1]*beam.y*beam.z+ccc[6-1]*beam.x*beam.z+ccc[7-1]*beam.x+ccc[8-1]*beam.y+ccc[9-1]*beam.z+ccc[10-1]
-#
-#        t=(-b+np.sqrt(b**2-4*a*c))/(2*a)
-#        if t[0]>=0:
-#            t=t
-#        else:
-#            t=(-b-np.sqrt(b**2-a*c))/a
-#        beam.x = beam.x+beam.vx*t
-#        beam.y = beam.y+beam.vy*t
-#        beam.z = beam.z+beam.vz*t
-#
-
     def intersection_with_surface_conic(self,beam):
 
         [t, flag] = self.ccc_object.calculate_intercept(np.array([beam.x, beam.y, beam.z]),
@@ -302,36 +284,43 @@ class Optical_element(object):
         return beam
 
 
-#    def trace_surface_conic(self,beam):
-#
-#        beam=beam.duplicate()
-#        self.rotation_to_the_optical_element(beam)
-#        self.translation_to_the_optical_element(beam)
-#
-#        x2=np.array([[beam.x],[beam.y],[beam.z]])
-#        v=self.ccc_object.get_normal(x2)
-#        [t,flag]=self.ccc_object.calculate_intercept(np.array([beam.x,beam.y,beam.z]),np.array([beam.vx,beam.vy,beam.vz]))
-#
-#        beam.x = beam.x+beam.vx*t
-#        beam.y = beam.y+beam.vy*t
-#        beam.z = beam.z+beam.vz*t
-#
-#        beam.plot_yx()
-#        plt.title("footprint")
-#
-#        #####  Output direction ############################################################################################
-#        position = Vector(beam.x, beam.y, beam.z)
-#        normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-#        normal.normalization()
-#        velocity = Vector(beam.vx, beam.vy, beam.vz)
-#        vperp = velocity.perpendicular_component(normal)
-#        v2 = velocity.sum(vperp)
-#        v2 = v2.sum(vperp)
-#        [beam.vx, beam.vy, beam.vz] = [v2.x, v2.y, v2.z]
-#        ####################################################################################################################
-#        self.rotation_to_the_screen(beam)
-#        self.translation_to_the_screen(beam)
-#        self.intersection_with_the_screen(beam)
-#        return beam
-#
-#
+
+
+#     def trace_surface_conic(self,beam):
+# 
+#         beam=beam.duplicate()
+#         self.rotation_to_the_optical_element(beam)
+#         self.translation_to_the_optical_element(beam)
+# 
+#         x2=np.array([[beam.x],[beam.y],[beam.z]])
+#         v=self.ccc_object.get_normal(x2)
+#         [t,flag]=self.ccc_object.calculate_intercept(np.array([beam.x,beam.y,beam.z]),np.array([beam.vx,beam.vy,beam.vz]))
+# 
+#         beam.x = beam.x+beam.vx*t
+#         beam.y = beam.y+beam.vy*t
+#         beam.z = beam.z+beam.vz*t
+# 
+# 
+#         print(np.mean(beam.x))
+#         print(np.mean(beam.y))
+# 
+#         beam.plot_yx()
+#         plt.title("footprint")
+# 
+#         #####  Output direction ############################################################################################
+#         position = Vector(beam.x, beam.y, beam.z)
+#         normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
+#         normal.normalization()
+#         velocity = Vector(beam.vx, beam.vy, beam.vz)
+#         vperp = velocity.perpendicular_component(normal)
+#         v2 = velocity.sum(vperp)
+#         v2 = v2.sum(vperp)
+#         [beam.vx, beam.vy, beam.vz] = [v2.x, v2.y, v2.z]
+#         ####################################################################################################################
+# 
+#         print(self.ccc_object.get_coefficients())
+#         self.rotation_to_the_screen(beam)
+#         self.translation_to_the_screen(beam)
+#         self.intersection_with_the_screen(beam)
+# 
+#         return beam
