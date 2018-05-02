@@ -41,16 +41,15 @@ def test_spherical_mirror():
     q=1.
     theta=30
     theta=theta*np.pi/180
-    alpha=0
+    alpha=90*np.pi/180
 
-    spherical_mirror=Optical_element.initialize_as_spherical_mirror(p,q,theta,alpha,1.5396)
+
+    spherical_mirror=Optical_element.initialize_as_spherical_mirror(p,q,theta,alpha)
     #spherical_mirror.set_spherical_mirror_radius_from_focal_distances()
     print(spherical_mirror.R)
 
 
-    R_boundary=0.15
-    bound=BoundaryCircle(R_boundary)
-    beam1=spherical_mirror.trace_optical_element(beam1,bound)
+    beam1=spherical_mirror.trace_optical_element(beam1)
     beam1.plot_xz()
 
     beam1.plot_xpzp()

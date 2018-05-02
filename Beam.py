@@ -21,15 +21,16 @@ class Beam(object):
         self.flag = np.zeros(N)
 
         self.N = N
+        self.counter=0
 
     def set_point(self,x,y,z):
 
-        self.x = x + self.x
-        self.y = y + self.y
-        self.z = z + self.z
+        self.x = x + self.x * 0.0
+        self.y = y + self.y * 0.0
+        self.z = z + self.z * 0.0
 
 
-    def initialize_from_arrays(self, x,y,z,vx,vy,vz,flag):
+    def initialize_from_arrays(self, x,y,z,vx,vy,vz,flag,counter):
 
         self.x = x
         self.y = y
@@ -42,34 +43,8 @@ class Beam(object):
         self.flag = flag
 
         self.N = x.size
+        self.counter=counter
 
-    @classmethod
-    def initialize_mysource(cls, dx,dz,p0,p1,N=10000,x=0,y=0,z=0):
-
-        beam = Beam(N=N)
-        if p0==0:                                                                       # point source
-            beam.set_point_source(x,y,z)
-        if p0==1:                                                                        #square spot with of 1 micrometer
-            for i in range (0,N):
-                beam.x=1*(np.random.random(N)-0.5)*1e-6
-                beam.y=1*(np.random.random(N)-0.5)*1e-6
-                beam.z=1*(np.random.random(N)-0.5)*1e-6
-
-        if p1==0:                                                                         # uniform velocity distribution
-            beam.vx = dx * (np.random.random(N) - 0.5)*2
-            beam.vz = dz * (np.random.random(N) - 0.5)*2
-            beam.vy = np.random.random(N)
-            for i in range(0, N):
-                beam.vy[i] = np.sqrt(1 - beam.vx[i] ** 2 - beam.vz[i] ** 2)
-        if p1==1:                                                                        # gaussian velocity distribution
-            beam.vx = dx * (np.random.randn(N))
-            beam.vz = dz * (np.random.randn(N))
-            beam.vy = np.random.random(N)
-            for i in range(0, N):
-                beam.vy[i] = np.sqrt(1 - beam.vx[i] ** 2 - beam.vz[i] ** 2)
-
-        beam.t=np.zeros(N)
-        return beam
 
     def duplicate(self):
         b = Beam(N=self.N)
@@ -79,23 +54,19 @@ class Beam(object):
                                  self.vx.copy(),
                                  self.vy.copy(),
                                  self.vz.copy(),
-                                 self.flag.copy()  )
+                                 self.flag.copy(),
+                                 self.counter,
+                                 )
         return b
 
 
-    def set_point_source(self,x0,y0,z0):
-        self.x = self.x * 0.0 + x0
-        self.y = self.y * 0.0 + y0
-        self.z = self.z * 0.0 + z0
-
 
     def set_gaussian_divergence(self,dx,dz):                                                                      # gaussian velocity distribution
-            N=self.N
-            self.vx = dx * (np.random.randn(N))
-            self.vz = dz * (np.random.randn(N))
-            self.vy = np.random.random(N)
-            for i in range(0, N):
-                self.vy[i] = np.sqrt(1 - self.vx[i] ** 2 - self.vz[i] ** 2)
+        N=self.N
+        self.vx = dx * (np.random.randn(N))
+        self.vz = dz * (np.random.randn(N))
+        self.vy = np.random.random(N)
+        self.vy = np.sqrt(1 - self.vx**2 - self.vz**2)
 
 
     def set_flat_divergence(self,dx,dz):                                                                         # uniform velocity distribution
@@ -103,8 +74,7 @@ class Beam(object):
             self.vx = dx * (np.random.random(N) - 0.5)*2
             self.vz = dz * (np.random.random(N) - 0.5)*2
             self.vy = np.random.random(N)
-            for i in range(0, N):
-                self.vy[i] = np.sqrt(1 - self.vx[i] ** 2 - self.vz[i] ** 2)
+            self.vy = np.sqrt(1 - self.vx**2 - self.vz**2)
 
     def set_divergences_collimated(self):
         self.vx = self.x * 0.0 + 0.0
@@ -146,6 +116,43 @@ class Beam(object):
         plt.ylabel('zp axis [urad]')
 
 
+    def plot_good_xz(self):
+        plt.figure()
+        indices = np.where(self.flag > 0)
+        plt.plot(self.x[indices], self.z[indices], 'ro')
+        plt.xlabel('x axis')
+        plt.ylabel('z axis')
+
+    def plot_good_xy(self):
+        indices = np.where(self.flag > 0)
+        plt.figure()
+        plt.plot(self.x[indices], self.y[indices], 'ro')
+        plt.xlabel('x axis')
+        plt.ylabel('y axis')
+
+    def plot_good_zy(self):
+        indices = np.where(self.flag > 0)
+        plt.figure()
+        plt.plot(self.z[indices], self.y[indices], 'ro')
+        plt.xlabel('z axis')
+        plt.ylabel('y axis')
+
+    def plot_good_yx(self):
+        indices = np.where(self.flag > 0)
+        plt.figure()
+        plt.plot(self.y[indices], self.x[indices], 'ro')
+        plt.xlabel('y axis')
+        plt.ylabel('x axis')
+
+    def plot_good_xpzp(self):
+        indices = np.where(self.flag > 0)
+        plt.figure()
+        plt.plot(1e6*self.vx[indices], 1e6*self.vz[indices], 'ro')
+        plt.xlabel('xp axis [urad]')
+        plt.ylabel('zp axis [urad]')
+
+
+
     def histogram(self):
         plt.figure()
         plt.hist(self.x)
@@ -154,11 +161,6 @@ class Beam(object):
         plt.figure()
         plt.hist(self.z,1000)
         plt.title('z position for uniform distribution')
-
-
-
-
-
 
 
 
@@ -180,7 +182,7 @@ if __name__ == "__main__":
     R=2*p*q/(p+q)/np.cos(pi/180.0*theta)
     spherical_mirror=Optical_element.initialize_as_plane_mirror(p,q,theta,alpha)
 
-    beam1=spherical_mirror.reflection(beam1)
+    beam1=spherical_mirror.trace_optical_element(beam1)
 
     #beam1.plot_xz()
 
