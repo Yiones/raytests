@@ -15,8 +15,8 @@ class Beam(object):
 
 
         self.vx = np.zeros(N)
-        self.vz = np.zeros(N)
-        self.vy = np.zeros(N)
+        self.vz = -np.ones(N)/np.sqrt(2)
+        self.vy = np.ones(N)/np.sqrt(2)
 
         self.flag = np.zeros(N)
 
@@ -55,9 +55,12 @@ class Beam(object):
                                  self.vy.copy(),
                                  self.vz.copy(),
                                  self.flag.copy(),
-                                 self.counter,
-                                 )
+                                 self.counter)
         return b
+
+    def set_rectangular_spot(self,xmax,xmin,zmax,zmin):
+        self.x = (np.random.random(self.N)-0.5)*(xmax-xmin)+(xmax+xmin)/2
+        self.z = (np.random.random(self.N)-0.5)*(zmax-zmin)+(zmax+zmin)/2
 
 
 
@@ -155,11 +158,11 @@ class Beam(object):
 
     def histogram(self):
         plt.figure()
-        plt.hist(self.x)
+        plt.hist(self.x,100)
         plt.title('x position for gaussian distribution')
 
         plt.figure()
-        plt.hist(self.z,1000)
+        plt.hist(self.z,100)
         plt.title('z position for uniform distribution')
 
 
