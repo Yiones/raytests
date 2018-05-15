@@ -1,93 +1,105 @@
-from Vector import Vector
+from Beam import Beam
+from OpticalElement import Optical_element
+from Shape import BoundaryRectangle
 import numpy as np
+from SurfaceConic import SurfaceConic
+import matplotlib.pyplot as plt
 
 
-x=0.
-y=0.
-z=20.
+def generate_shadow_beam():
+    #
+    # Python script to run shadow3. Created automatically with ShadowTools.make_python_script_from_list().
+    #
+    import Shadow
+    import numpy
 
-### rotation   #####
+    # write (1) or not (0) SHADOW files start.xx end.xx star.xx
+    iwrite = 0
 
-position=Vector(x,y,z)
-position.rotation(-90*np.pi/180)
-(x,y,z)=(position.x,position.y,position.z)
+    #
+    # initialize shadow3 source (oe0) and beam
+    #
+    beam = Shadow.Beam()
+    oe0 = Shadow.Source()
 
-velocity=Vector(0.,20.+2*np.sqrt(2),-20.)
-velocity.normalization()
-velocity.rotation(-90*np.pi/180)
-vx=velocity.x
-vy=velocity.y
-vz=velocity.z
+    #
+    # Define variables. See meaning of variables in:
+    #  https://raw.githubusercontent.com/srio/shadow3/master/docs/source.nml
+    #  https://raw.githubusercontent.com/srio/shadow3/master/docs/oe.nml
+    #
 
-print("We have an initial velocity of")
-print(vx,vy,vz)
-
-### translation   #####
-
-p=Vector(0.,20.+np.sqrt(2),0.)
-p.rotation(-90*np.pi/180)
-x=x-p.x
-y=y-p.y
-z=z-p.z
-
-#print(x,y,z)
-
-### intersection   #####
-
-a=-vx**2-vy**2+vz**2
-b=(-x*vx-y*vy+z*vz)
-c=-x**2-y**2+z**2-1
-
-print("a, b, c are respectively:\n%f   %f    %f" % (a, b, c))
-
-if a!=0:
-    t=(-b-np.sqrt(b**2-a*c))/a
-else:
-    t=-c/b
-print("The time of flight is:      %f" %(t))
+    oe0.FDISTR = 1
+    oe0.FSOUR = 1
+    oe0.F_PHOT = 0
+    oe0.HDIV1 = 0.0
+    oe0.HDIV2 = 0.0
+    oe0.IDO_VX = 0
+    oe0.IDO_VZ = 0
+    oe0.IDO_X_S = 0
+    oe0.IDO_Y_S = 0
+    oe0.IDO_Z_S = 0
+    oe0.NPOINT = 10000
+    oe0.PH1 = 1000.0
+    oe0.VDIV1 = 0.0
+    oe0.VDIV2 = 0.0
+    oe0.WXSOU = 5.0
+    oe0.WZSOU = 5.0
 
 
-x = x + vx*t
-y = y + vy*t
-z = z + vz*t
+    # Run SHADOW to create the source
 
-#print(x,y,z)
+    if iwrite:
+        oe0.write("start.00")
 
-### output direction ###
+    beam.genSource(oe0)
 
-position=Vector(x,y,z)
-velocity=Vector(vx,vy,vz)
+    if iwrite:
+        oe0.write("end.00")
+        beam.write("begin.dat")
 
-print(velocity.info())
-
-normal = Vector(-2*x,-2*y, 2*z)
-normal.normalization()
-vpep = velocity.perpendicular_component(normal)
-v2=velocity.sum(vpep)
-v2=v2.sum(vpep)
-
-print(v2.info())
-
-(vx,vy,vz)=(v2.x,v2.y,v2.z)
-
-### rotation to the screen ###
-
-position=Vector(x,y,z)
-velocity=Vector(vx,vy,vz)
-position.rotation(-(90*np.pi/180),"x")
-velocity.rotation(-(90*np.pi/180),"x")
-(x,y,z)=(position.x,position.y,position.z)
-(vx,vy,vz)=(velocity.x,velocity.y,velocity.z)
-
-### translation and intersection to the screen ###
-
-y=y-np.sqrt(2)
-
-t=-y/vy
-
-x = x + vx*t
-y = y + vy*t
-z = z + vz*t
+    return beam
 
 
-print(x,y,z)
+beam=Beam()
+beam.set_divergences_collimated()
+beam.set_point(0.,0.,1000.)
+beam.set_rectangular_spot(5/2,-5/2,5/2,-5/2)
+
+
+#shadow_beam=generate_shadow_beam()
+#
+#beam = Beam()
+#beam.initialize_from_arrays(
+#    shadow_beam.getshonecol(1),
+#    shadow_beam.getshonecol(2),
+#    shadow_beam.getshonecol(3),
+#    shadow_beam.getshonecol(4),
+#    shadow_beam.getshonecol(5),
+#    shadow_beam.getshonecol(6),
+#    shadow_beam.getshonecol(10),
+#    0
+#)
+
+beam.plot_xz()
+beam.plot_xpzp()
+
+p = 10000.
+q = 25.
+theta = 0 * np.pi / 180
+alpha = 0 * np.pi / 180
+
+#par_mirro=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha,"p")
+#beam=par_mirro.trace_optical_element(beam)
+
+#ccc=SurfaceConic([1.,1.,0,0,0,0,0,0,-1000.,0])
+#prova=Optical_element(ccc)
+#prova.set_parameters(p,q,theta,alpha)
+#prova.type="Surface conical mirror"
+
+prova=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha,"p")
+print(prova.ccc_object.get_coefficients())
+
+beam=prova.trace_optical_element(beam)
+#
+beam.plot_xz()
+plt.show()
