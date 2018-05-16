@@ -87,7 +87,8 @@ class Optical_element(object):
         oe.alpha = alpha
         oe.type = "Surface conical mirror 1"
         #oe.ccc_object = SurfaceConic(np.array([-1.,-1.,1.,0,0,0,0,0,0,-1.]))
-        oe.ccc_object = SurfaceConic(np.array([-1., -1., 1., 0, 0, 0, 0, 0, 0, -1.]))
+        z0=(25.+np.sqrt(2))*1
+        oe.ccc_object = SurfaceConic(np.array([-1., -1., 1., 0, 0, 0, 0., 0., -2*z0, -z0**2-1.]))
         return oe
     #
     # initializers from focal distances
@@ -137,7 +138,10 @@ class Optical_element(object):
         oe.q=q
         oe.theta=theta
         oe.alpha=alpha
-        oe.type="Surface conical mirror"
+        if infinity_location=="p":
+            oe.type="Surface conical mirror p"
+        else:
+            oe.type = "Surface conical mirror"
         oe.ccc_object = SurfaceConic()
         oe.ccc_object.set_paraboloid_from_focal_distance(p, q, np.pi/2-theta, infinity_location)
         if cylindrical:
@@ -163,6 +167,9 @@ class Optical_element(object):
         if switch_convexity:
             oe.ccc_object.switch_convexity()
         return oe
+
+
+
 
 
     @classmethod
@@ -203,6 +210,7 @@ class Optical_element(object):
         beam.z=beam.z-vector_point.z
 
 
+
     def rotation_to_the_screen(self,beam):
 
         position = Vector(beam.x,beam.y,beam.z)
@@ -211,6 +219,7 @@ class Optical_element(object):
         velocity.rotation(-(np.pi/2-self.theta),"x")
         [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
         [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
+
 
 
 
@@ -274,16 +283,34 @@ class Optical_element(object):
             beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
             beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
 
+    def intersection_with_surface_conic_p(self,beam):
+
+        d=-self.ccc_object.get_coefficients()[9-1]
+
+        a = beam.vx**2+beam.vy**2
+        b = 2*beam.x*beam.vx+2*beam.y*beam.vy-d*beam.vz
+        c = beam.x**2+beam.y**2-d*beam.z
+
+        t=(-b+np.sqrt(b**2-4*a*c))/(2*a)
+
+        beam.x = beam.x + beam.vx * t
+        beam.y = beam.y + beam.vy * t
+        beam.z = beam.z=(beam.x**2+beam.y**2)/d
+
+
+
 
     def new_intersection(self,beam):
 
-        a=beam.vz**2-beam.vy**2
-        b=2*beam.z*beam.vz
-        c=beam.z**2-1
+        print(np.mean(beam.vx),np.mean(beam.vy),np.mean(beam.vz))
+        print("Ohibo")
+        z0=(25.+np.sqrt(2))*1
+        a= -beam.vx**2-beam.vy**2+beam.vz**2
+        b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
+        c= -beam.x**2-beam.y**2+beam.z**2-1+z0**2-2*beam.z*z0
 
-        t=(-b-np.sqrt(b**2-4*a*c))/2*a
-
-        print("the average time of flight is:     %f"   %(t))
+        print(a,b,c)
+        t=(-b-np.sqrt(b**2-a*c))/a
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
         beam.z = beam.z + beam.vz * t
@@ -299,6 +326,8 @@ class Optical_element(object):
         elif self.type == "Spherical mirror":
             normal=position.spherical_normal(self.R)
         elif self.type == "Surface conical mirror":
+            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
+        elif self.type == "Surface conical mirror p":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
         elif self.type =="Surface conical mirror 1":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
@@ -330,6 +359,8 @@ class Optical_element(object):
             self.intersection_with_spherical_mirror(beam)
         elif self.type == "Surface conical mirror":
             self.intersection_with_surface_conic(beam)
+        elif self.type == "Surface conical mirror p":
+            self.intersection_with_surface_conic_p(beam)
         elif self.type =="Surface conical mirror 1":
             self.new_intersection(beam)
 
@@ -352,6 +383,7 @@ class Optical_element(object):
         self.translation_to_the_optical_element(beam)
         self.intersection_with_optical_element(beam)
 
+        #beam.z=(beam.x**2+beam.y**2)/1000
 
         beam.plot_yx()
         plt.title("footprint")
@@ -366,6 +398,69 @@ class Optical_element(object):
 
         return beam
 
+
+    def trace_Wolter_1(self, beam1):
+
+
+        beam=beam1.duplicate()
+        beam.counter=beam.counter+1
+
+        #
+        # change beam to o.e. frame
+        #
+        self.rotation_to_the_optical_element(beam)
+        self.translation_to_the_optical_element(beam)
+        self.intersection_with_optical_element(beam)      #####intersection with the paraboloid
+
+        #beam.z=(beam.x**2+beam.y**2)/1000
+
+        #beam.plot_yx()
+        #plt.title("footprint")
+
+        self.output_direction_from_optical_element(beam)
+        #beam.plot_ypzp()
+
+        hyper = Optical_element.initialize_my_hyperboloid(p=25,q=0,theta=90*np.pi/180,alpha=0)                                                     ##### we have to introduce the hyperboloid
+        hyper.rotation_to_the_optical_element(beam)
+        hyper.intersection_with_optical_element(beam)                                                     #####intersection with the hyperboloid with neither rotation and translation
+        hyper.output_direction_from_optical_element(beam)                                                     ##### output direction w.r.t. the hyperboloid mirror
+        beam.plot_ypzp()
+
+
+
+        #t=25./beam.vy
+        #beam.x = beam.x + beam.vx*t
+        #beam.y = beam.y + beam.vy*t
+        #beam.z = beam.z + beam.vz*t
+
+        #beam.plot_xz()
+
+        #self.q=25.+2*np.sqrt(2)
+
+        #t = -beam.x / beam.vx
+        #beam.x = beam.x + beam.vx * t
+        #beam.y = beam.y + beam.vy * t
+        #beam.z = beam.z + beam.vz * t
+        #print(np.mean(beam.z))
+
+        self.q=self.q+2*np.sqrt(2)
+        self.rotation_to_the_screen(beam)
+
+        #t = -beam.x / beam.vx
+        #beam.x = beam.x + beam.vx * t
+        #beam.y = beam.y + beam.vy * t
+        #beam.z = beam.z + beam.vz * t
+        #print(np.mean(beam.z))
+
+
+        self.translation_to_the_screen(beam)
+        self.intersection_with_the_screen(beam)
+#
+        return beam
+
+
+
+
     def trace_ideal_lens(self,beam1):
 
         beam=beam1.duplicate()
@@ -376,7 +471,6 @@ class Optical_element(object):
         #fx=self.q
         #fz=self.q
 
-        print(self.q)
 
         t = self.p / beam.vy
         beam.x = beam.x + beam.vx * t
