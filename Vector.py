@@ -82,6 +82,7 @@ class Vector(object):
 
 
 
+
     def normalization(self):
         mod=np.sqrt(self.x**2+self.y**2+self.z**2)
         self.x = self.x / mod

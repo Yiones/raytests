@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import pi
+from Vector import Vector
 
 from OpticalElement import Optical_element
 
@@ -13,10 +14,13 @@ class Beam(object):
         self.y = np.zeros(N)
         self.z = np.zeros(N)
 
+        velocity = Vector(0., 1000-25, -100.)
+        velocity.normalization()
 
-        self.vx = np.zeros(N)
-        self.vz = -np.ones(N)/np.sqrt(2)
-        self.vy = np.ones(N)/np.sqrt(2)
+
+        self.vx = np.ones(N) * velocity.x
+        self.vz = np.ones(N) * velocity.z
+        self.vy = np.ones(N) * velocity.y
 
         self.flag = np.zeros(N)
 
@@ -59,9 +63,14 @@ class Beam(object):
         return b
 
     def set_rectangular_spot(self,xmax,xmin,zmax,zmin):
-        self.x = (np.random.random(self.N)-0.5)*(xmax-xmin)+(xmax+xmin)/2
-        self.z = (np.random.random(self.N)-0.5)*(zmax-zmin)+(zmax+zmin)/2
+        self.x = (np.random.random(self.N)-0.5)*(xmax-xmin)+(xmax+xmin)/2 + self.x
+        self.z = (np.random.random(self.N)-0.5)*(zmax-zmin)+(zmax+zmin)/2 + self.z
 
+    def set_circular_spot(self,r1):
+        theta = (np.random.random(self.N))*2*np.pi
+        r = (np.random.random(self.N)-0.5)*2*r1
+        self.x = r*np.cos(theta) + self.x
+        self.z = r*np.sin(theta) + self.z
 
 
     def set_gaussian_divergence(self,dx,dz):                                                                      # gaussian velocity distribution
@@ -80,9 +89,33 @@ class Beam(object):
             self.vy = np.sqrt(1 - self.vx**2 - self.vz**2)
 
     def set_divergences_collimated(self):
-        self.vx = self.x * 0.0 + 0.0
-        self.vy = self.y * 0.0 + 1.0
-        self.vz = self.z * 0.0 + 0.0
+        self.vx = self.x * 0.0
+        self.vz = self.z * 0.0
+        self.vy = self.y * 0.0 + 1.
+
+
+    def merge(self,beam):
+
+        beam_out=Beam(self.N+beam.N)
+
+        beam_out.x[0:self.N] = self.x
+        beam_out.y[0:self.N] = self.y
+        beam_out.z[0:self.N] = self.z
+        beam_out.vx[0:self.N] = self.vx
+        beam_out.vy[0:self.N] = self.vy
+        beam_out.vz[0:self.N] = self.vz
+        beam_out.flag[0:self.N] = self.flag
+
+        beam_out.x[self.N:self.N+beam.N] = beam.x
+        beam_out.y[self.N:self.N+beam.N] = beam.y
+        beam_out.z[self.N:self.N+beam.N] = beam.z
+        beam_out.vx[self.N:self.N+beam.N] = beam.vx
+        beam_out.vy[self.N:self.N+beam.N] = beam.vy
+        beam_out.vz[self.N:self.N+beam.N] = beam.vz
+        beam_out.flag[self.N:self.N+beam.N] = beam.flag
+
+
+        return beam_out
 
     #
     #
@@ -116,6 +149,12 @@ class Beam(object):
         plt.figure()
         plt.plot(1e6*self.vx, 1e6*self.vz, 'ro')
         plt.xlabel('xp axis [urad]')
+        plt.ylabel('zp axis [urad]')
+
+    def plot_ypzp(self):
+        plt.figure()
+        plt.plot(1e6*self.vy, 1e6*self.vz, 'ro')
+        plt.xlabel('yp axis [urad]')
         plt.ylabel('zp axis [urad]')
 
 
