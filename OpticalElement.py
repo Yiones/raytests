@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from Vector import Vector
@@ -79,7 +78,7 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_my_hyperboloid(cls,p,q,theta,alpha=0):
+    def initialize_my_hyperboloid(cls,p,q,theta,alpha=0, wolter=0.):
         oe=Optical_element()
         oe.p = p
         oe.q = q
@@ -87,7 +86,7 @@ class Optical_element(object):
         oe.alpha = alpha
         oe.type = "Surface conical mirror 1"
         #oe.ccc_object = SurfaceConic(np.array([-1.,-1.,1.,0,0,0,0,0,0,-1.]))
-        z0= (25.+np.sqrt(2))*1
+        z0= (25.+np.sqrt(2))*wolter
         a=1.
         oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1/a**2, 0, 0, 0, 0., 0., -2*z0, -z0**2-1.]))
         return oe
@@ -139,10 +138,7 @@ class Optical_element(object):
         oe.q=q
         oe.theta=theta
         oe.alpha=alpha
-        if infinity_location=="p":
-            oe.type="Surface conical mirror p"
-        else:
-            oe.type = "Surface conical mirror p"
+        oe.type="Surface conical mirror"
         oe.ccc_object = SurfaceConic()
         oe.ccc_object.set_paraboloid_from_focal_distance(p, q, np.pi/2-theta, infinity_location)
         if cylindrical:
@@ -269,8 +265,15 @@ class Optical_element(object):
 
     def intersection_with_surface_conic(self,beam):
 
-        [t, flag] = self.ccc_object.calculate_intercept(np.array([beam.x, beam.y, beam.z]),
+        t_source = 0.
+        [t1, t2, flag] = self.ccc_object.calculate_intercept(np.array([beam.x, beam.y, beam.z]),
                                                         np.array([beam.vx, beam.vy, beam.vz]))
+
+        if np.abs(np.mean(t1)-t_source)<= np.abs(np.mean(t2)-t_source):
+            t=t1
+        else:
+            t=t2
+
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
         beam.z = beam.z + beam.vz * t
@@ -284,33 +287,12 @@ class Optical_element(object):
             beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
             beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
 
-    def intersection_with_surface_conic_p(self,beam):
-
-        c=self.ccc_object.get_coefficients()
-
-        a=c[0]*beam.vx**2+c[1]*beam.vy**2+c[2]*beam.vz**2+c[3]*beam.vx*beam.vy+c[4]*beam.vy*beam.vz+c[5]*beam.vx*beam.vz
-
-        b=2*c[0]*beam.x*beam.vx+2*c[1]*beam.y*beam.vy+2*c[2]*beam.z*beam.vz+c[3]*(beam.x*beam.vy+beam.y*beam.vx)+c[4]*(beam.y*beam.vz+beam.z*beam.vy) \
-          + c[5]*(beam.x*beam.vz+beam.z*beam.vx)+c[6]*beam.vx+c[7]*beam.vy+c[8]*beam.vz
-
-        cc=c[0]*beam.x**2+c[1]*beam.y**2+c[2]*beam.z**2+c[3]*beam.x*beam.y+c[4]*beam.y*beam.z+c[5]*beam.x*beam.z+c[6]*beam.x+c[7]*beam.y+c[8]*beam.z+c[9]
-
-        if np.mean(a)<1e-13:
-            t = -cc / b
-        else:
-             t=(-b-np.sqrt(b**2-4*a*cc))/(2*a)
-
-
-        beam.x = beam.x + beam.vx * t
-        beam.y = beam.y + beam.vy * t
-        beam.z = beam.z + beam.vz * t
-
-
 
 
     def new_intersection(self,beam):
 
-        z0= (25.+np.sqrt(2))*1
+        ccc=self.ccc_object.get_coefficients()
+        z0= -ccc[8]/2
         a= -beam.vx**2-beam.vy**2+beam.vz**2
         b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
         c= -beam.x**2-beam.y**2+beam.z**2-1+z0**2-2*beam.z*z0
@@ -334,21 +316,12 @@ class Optical_element(object):
             normal=position.spherical_normal(self.R)
         elif self.type == "Surface conical mirror":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-        elif self.type == "Surface conical mirror p":
-            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
         elif self.type =="Surface conical mirror 1":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
 
 
         normal.normalization()
 
-        if self.type == "Surface conical mirror 1":
-            print("Boh!")
-            normal.x=-normal.x
-            normal.y=-normal.y
-            normal.z=-normal.z
-
-        print("Whoa")
         velocity=Vector(beam.vx,beam.vy,beam.vz)
         vperp=velocity.perpendicular_component(normal)
         v2=velocity.sum(vperp)
@@ -373,8 +346,6 @@ class Optical_element(object):
             self.intersection_with_spherical_mirror(beam)
         elif self.type == "Surface conical mirror":
             self.intersection_with_surface_conic(beam)
-        elif self.type == "Surface conical mirror p":
-            self.intersection_with_surface_conic_p(beam)
         elif self.type =="Surface conical mirror 1":
             self.new_intersection(beam)
 
@@ -429,13 +400,13 @@ class Optical_element(object):
 
         self.output_direction_from_optical_element(beam)
 
-        hyper = Optical_element.initialize_my_hyperboloid(p=25,q=0,theta=90*np.pi/180,alpha=0)                                                     ##### we have to introduce the hyperboloid
+        hyper = Optical_element.initialize_my_hyperboloid(p=25,q=0,theta=90*np.pi/180,alpha=0,wolter=1)                                                     ##### we have to introduce the hyperboloid
         hyper.rotation_to_the_optical_element(beam)
         hyper.intersection_with_optical_element(beam)                                                     #####intersection with the hyperboloid with neither rotation and translation
         hyper.output_direction_from_optical_element(beam)                                                     ##### output direction w.r.t. the hyperboloid mirror
         beam.plot_ypzp()
 
-        self.q=self.q+2*np.sqrt(2)+100
+        self.q=self.q+2*np.sqrt(2)
         self.rotation_to_the_screen(beam)
 
 
@@ -478,7 +449,7 @@ class Optical_element(object):
 
         #self.q = 25.
         #self.rotation_to_the_screen(beam)
-#
+
         #self.translation_to_the_screen(beam)
         #self.intersection_with_the_screen(beam)
 
@@ -518,28 +489,4 @@ class Optical_element(object):
         beam.z = beam.z + beam.vz * t
 
         return beam
-
-
-
-
-
-
-#   position = Vector(beam.x,beam.y,beam.z)
-#   velocity = Vector(beam.vx,beam.vy,beam.vz)
-#   position.rotation(self.alpha,"y")
-#   position.rotation(-(np.pi/2-self.theta),"x")
-#   velocity.rotation(self.alpha,"y")
-#   velocity.rotation(-(np.pi/2-self.theta),"x")
-#   [beam.x,beam.y,beam.z] = [position.x,position.y,position.z]
-#   [beam.vx,beam.vy,beam.vz] = [velocity.x,velocity.y,velocity.z]
-
-
-
-
-
-
-
-
-
-
 

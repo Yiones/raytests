@@ -267,6 +267,7 @@ def test_spherical_mirror():
         shadow_beam.getshonecol(5),
         shadow_beam.getshonecol(6),
         shadow_beam.getshonecol(10),
+        0
     )
 
     #beam1 = Beam(5000)
@@ -278,7 +279,7 @@ def test_spherical_mirror():
 
     shadow_beam = run_shadow_source()
 
-    spherical_mirror=Optical_element.initialize_as_sphere_from_focal_distances(p,q, theta)
+    spherical_mirror=Optical_element.initialize_as_surface_conic_sphere_from_focal_distances(p,q, theta)
 
     beam1=spherical_mirror.trace_optical_element(beam1)
 
@@ -316,13 +317,14 @@ def test_ellipsoidal_mirror():
         shadow_beam.getshonecol(5),
         shadow_beam.getshonecol(6),
         shadow_beam.getshonecol(10),
+        0
     )
 
     p=20.
     q=10.
     theta=50*np.pi/180
 
-    spherical_mirror=Optical_element.initialize_as_ellipsoid_from_focal_distances(p,q,theta)
+    spherical_mirror=Optical_element.initialize_as_surface_conic_ellipsoid_from_focal_distances(p,q,theta)
 
     beam1=spherical_mirror.trace_optical_element(beam1)
 
@@ -356,16 +358,19 @@ def test_paraboloid_mirror():
         shadow_beam.getshonecol(5),
         shadow_beam.getshonecol(6),
         shadow_beam.getshonecol(10),
+        0
     )
 
     p=10.
     q=20.
     theta=72*np.pi/180
-    spherical_mirror=Optical_element.initialize_as_paraboloid_from_focal_distances(p,q,theta)
+    alpha=0*np.pi/180
+    spherical_mirror=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha)
     beam1=spherical_mirror.trace_optical_element(beam1)
     beam1.plot_xz()
     beam1.plot_xpzp()
     plt.title("Paraboloid mirror  with p=10, q=20, theta=72")
+    print(spherical_mirror.ccc_object.get_coefficients())
     plt.show()
 
     shadow_beam = run_shadow_parabolic_mirror(shadow_beam)
@@ -379,7 +384,7 @@ def test_paraboloid_mirror():
 
 
 ####     This is problematic     #######################################################################################
-
+#
 #def test_hyperboloid_mirror():
 #    #beam1=Beam(5000)
 #    #beam1.set_point(0,0,0)
@@ -396,6 +401,7 @@ def test_paraboloid_mirror():
 #        shadow_beam.getshonecol(5),
 #        shadow_beam.getshonecol(6),
 #        shadow_beam.getshonecol(10),
+#        0
 #    )
 #
 #    p=1.
@@ -408,6 +414,6 @@ def test_paraboloid_mirror():
 #    plt.show()
 #
 #    shadow_beam=run_shadow_hyperbolic_mirror(shadow_beam)
-
-
+#
+#
 ########################################################################################################################
