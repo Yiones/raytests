@@ -309,37 +309,37 @@ class SurfaceConic(object):
         TPAR2 = AA*0.0
         IFLAG = numpy.ones(AA.size) # int(AA*0)+1
 
-        # itest1 = numpy.argwhere( numpy.abs(AA) > 1e-15)
-        # if len(itest1) > 0:
-        #
-        #     DENOM[itest1] = 0.5 / AA[itest1]
-        #     DETER[itest1] = BB[itest1]**2 - CC[itest1] * AA[itest1] * 4
-        #
-        #     TMP = DETER[itest1]
-        #
-        #     ibad = numpy.argwhere(TMP < 0)
-        #     if len(ibad) == 0:
-        #         IFLAG[itest1[ibad]] = -1
-        #
-        #     igood = numpy.argwhere(TMP >= 0)
-        #     if len(igood) > 0:
-        #         itmp = itest1[igood]
-        #         TPAR1[itmp] = -(BB[itmp] + numpy.sqrt(DETER[itmp])) * DENOM[itmp]
-        #         TPAR2[itmp] = -(BB[itmp] - numpy.sqrt(DETER[itmp])) * DENOM[itmp]
-        #
-        #         if keep == 0:
-        #             TPAR = numpy.maximum(TPAR1,TPAR2)
-        #         elif keep == 1:
-        #             TPAR = numpy.minimum(TPAR1,TPAR2)
-        #         elif keep == 2:
-        #             TPAR = TPAR1
-        #         elif keep == 3:
-        #             TPAR = TPAR2
-        #         else:
-        #             TPAR = TPAR1
-        #
-        # else:
-        #     TPAR = - CC / BB
+        #itest1 = numpy.argwhere( numpy.abs(AA) > 1e-15)
+        #if len(itest1) > 0:
+
+        #    DENOM[itest1] = 0.5 / AA[itest1]
+        #    DETER[itest1] = BB[itest1]**2 - CC[itest1] * AA[itest1] * 4
+
+        #    TMP = DETER[itest1]
+
+        #    ibad = numpy.argwhere(TMP < 0)
+        #    if len(ibad) == 0:
+        #        IFLAG[itest1[ibad]] = -1
+
+        #    igood = numpy.argwhere(TMP >= 0)
+        #    if len(igood) > 0:
+        #        itmp = itest1[igood]
+        #        TPAR1[itmp] = -(BB[itmp] + numpy.sqrt(DETER[itmp])) * DENOM[itmp]
+        #        TPAR2[itmp] = -(BB[itmp] - numpy.sqrt(DETER[itmp])) * DENOM[itmp]
+
+        #        if keep == 0:
+        #            TPAR = numpy.maximum(TPAR1,TPAR2)
+        #        elif keep == 1:
+        #            TPAR = numpy.minimum(TPAR1,TPAR2)
+        #        elif keep == 2:
+        #            TPAR = TPAR1
+        #        elif keep == 3:
+        #            TPAR = TPAR2
+        #        else:
+        #            TPAR = TPAR1
+
+        #else:
+        #    TPAR = - CC / BB
 
         TPAR = numpy.zeros_like(AA)
         T_SOURCE = 10.0
@@ -359,16 +359,15 @@ class SurfaceConic(object):
                     TPAR[i] = 0.0
                     IFLAG[i] = -1
                 else:
-                    TPAR1 = -(BB[i] + numpy.sqrt(DETER)) * DENOM
-                    TPAR2 = -(BB[i] - numpy.sqrt(DETER)) * DENOM
+                    TPAR1[i] = -(BB[i] + numpy.sqrt(DETER)) * DENOM
+                    TPAR2[i] = -(BB[i] - numpy.sqrt(DETER)) * DENOM
                     #if ( numpy.abs(TPAR1-T_SOURCE) <= numpy.abs(TPAR2-T_SOURCE)):
                     #    TPAR[i] = TPAR1
                     #else:
                     #    TPAR[i] = TPAR2
 
-        print("the times are:     ")
-        print(TPAR1, TPAR2)
         return TPAR1, TPAR2, IFLAG
+
 
 
 

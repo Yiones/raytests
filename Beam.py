@@ -14,13 +14,13 @@ class Beam(object):
         self.y = np.zeros(N)
         self.z = np.zeros(N)
 
-        velocity = Vector(0., 1000-25, -100.)
+        velocity = Vector(-0., 2000., -0100.)
         velocity.normalization()
 
 
         self.vx = np.ones(N) * velocity.x
-        self.vz = np.ones(N) * velocity.z
         self.vy = np.ones(N) * velocity.y
+        self.vz = np.ones(N) * velocity.z
 
         self.flag = np.zeros(N)
 

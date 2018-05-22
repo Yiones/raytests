@@ -4,6 +4,7 @@ from Shape import BoundaryRectangle
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.testing import assert_almost_equal
+from OpticalElement import CompoundOpticalElement
 
 
 def test_wolter1():
@@ -13,7 +14,7 @@ def test_wolter1():
     # beam.set_rectangular_spot(55/2*1,-55/2*1,55/2*1,-55/2*1)
     beam.set_circular_spot(25)
 
-    beam.plot_xz()
+    #beam.plot_xz()
 
     p = 25.
     q = 25.
@@ -30,21 +31,19 @@ def test_wolter1():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#def test_wolter1_compound():
+#
+#    beam = Beam()
+#    beam.set_divergences_collimated()
+#    beam.set_point(35., 0., 35.)
+#    # beam.set_rectangular_spot(55/2*1,-55/2*1,55/2*1,-55/2*1)
+#    beam.set_circular_spot(25)
+#    beam.plot_xz()
+#
+#    wolter=CompoundOpticalElement.initialiaze_as_wolter_1(p1=25.,q1=25.,theta1=0.)
+#
+#    beam=wolter.trace_wolter_compound_optical_element(beam)
+#
+#    beam.plot_xz()
+#
+#    plt.show()

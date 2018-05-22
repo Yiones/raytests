@@ -3,6 +3,9 @@ from OpticalElement import Optical_element
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.testing import assert_almost_equal
+from SurfaceConic import SurfaceConic
+
+do_plot = False
 
 def run_shadow_source():
     #
@@ -256,6 +259,7 @@ def run_shadow_hyperbolic_mirror(beam):
 
 def test_spherical_mirror():
 
+    print(">>>>>>>>>>>>>>> test_spherical_mirror")
     shadow_beam = run_shadow_source()
 
     beam1=Beam()
@@ -284,12 +288,11 @@ def test_spherical_mirror():
     beam1=spherical_mirror.trace_optical_element(beam1)
 
 
-    beam1.plot_xz()
-
-
-    beam1.plot_xpzp()
-    plt.title("Spherical mirror with p=2, q=1, theta=41")
-    plt.show()
+    if do_plot:
+        beam1.plot_xz()
+        beam1.plot_xpzp()
+        plt.title("Spherical mirror with p=2, q=1, theta=41")
+        plt.show()
 
     shadow_beam = run_shadow_spherical_mirror(shadow_beam)
 
@@ -301,6 +304,8 @@ def test_spherical_mirror():
 
 
 def test_ellipsoidal_mirror():
+
+    print(">>>>>>>>>>>>>>> test_ellipsoidal_mirror")
 
     #beam1=Beam(5000)
     #beam1.set_point(0,0,0)
@@ -328,11 +333,11 @@ def test_ellipsoidal_mirror():
 
     beam1=spherical_mirror.trace_optical_element(beam1)
 
-    beam1.plot_xz()
-
-    beam1.plot_xpzp()
-    plt.title("Ellipsoidal mirror with p=20, q=10, theta=50")
-    plt.show()
+    if do_plot:
+        beam1.plot_xz()
+        beam1.plot_xpzp()
+        plt.title("Ellipsoidal mirror with p=20, q=10, theta=50")
+        plt.show()
 
     shadow_beam = run_shadow_elliptical_mirror(beam1)
 
@@ -343,6 +348,8 @@ def test_ellipsoidal_mirror():
 
 
 def test_paraboloid_mirror():
+
+    print(">>>>>>>>>>>>>>> test_paraboloid_mirror")
     #beam1=Beam(5000)
     #beam1.set_point(0,0,0)
     #beam1.set_flat_divergence(5e-3,5e-2)
@@ -367,11 +374,13 @@ def test_paraboloid_mirror():
     alpha=0*np.pi/180
     spherical_mirror=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha)
     beam1=spherical_mirror.trace_optical_element(beam1)
-    beam1.plot_xz()
-    beam1.plot_xpzp()
-    plt.title("Paraboloid mirror  with p=10, q=20, theta=72")
-    print(spherical_mirror.ccc_object.get_coefficients())
-    plt.show()
+
+    if do_plot:
+        beam1.plot_xz()
+        beam1.plot_xpzp()
+        plt.title("Paraboloid mirror  with p=10, q=20, theta=72")
+        print(spherical_mirror.ccc_object.get_coefficients())
+        plt.show()
 
     shadow_beam = run_shadow_parabolic_mirror(shadow_beam)
 
