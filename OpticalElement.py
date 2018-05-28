@@ -20,6 +20,7 @@ class Optical_element(object):
         # IF ELEMENT IS native
         self.R = None  # SPHERICAL
         self.ccc_object = None # conic
+        self.focal = None
         self.fx = None
         self.fz = None
 
@@ -104,17 +105,19 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_my_hyperboloid(cls,p,q,theta=0.0,alpha=0.0, wolter=None):
+    def initialize_my_hyperboloid(cls,p,q,theta=0.0,alpha=0.0, wolter=None, z0=0, distance_of_focalization=0):
         oe=Optical_element(p,q,theta,alpha)
         oe.type = "Surface conical mirror 1"
         #oe.ccc_object = SurfaceConic(np.array([-1.,-1.,1.,0,0,0,0,0,0,-1.]))
+        #a= q/np.sqrt(2)
         a=q/np.sqrt(2)
-        z0=0
         if wolter==1:
-            z0= (25. + np.sqrt(2)*a)
+            a=abs(z0-distance_of_focalization)/np.sqrt(2)
         if wolter==2:
-            z0 = (25. - np.sqrt(2) * a)
-        oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1/a**2, 0, 0, 0, 0., 0., -2*z0, -z0**2-1.]))
+            z0 = p
+            a=abs(z0-q)/np.sqrt(2)
+        #oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1/a**2, 0, 0, 0, 0., 0., -2*z0, -z0**2-1.]))
+        oe.ccc_object = SurfaceConic(np.array([-1, -1, 1, 0, 0, 0, 0., 0., -2*z0, -z0**2-a**2.]))
         return oe
 
 
@@ -168,6 +171,7 @@ class Optical_element(object):
                                                       switch_convexity=0):
         oe=Optical_element(p,q,theta,alpha)
         oe.type="Surface conical mirror"
+        oe.focal=focal
         oe.ccc_object = SurfaceConic()
         if focal is None:
             oe.ccc_object.set_paraboloid_from_focal_distance(p, q, np.pi/2-theta, infinity_location)
@@ -177,6 +181,9 @@ class Optical_element(object):
             oe.ccc_object.set_cylindrical(cylangle)
         if switch_convexity:
             oe.ccc_object.switch_convexity()
+
+        print(oe.ccc_object.get_coefficients())
+
         return oe
 
 
@@ -209,7 +216,9 @@ class Optical_element(object):
         beam.counter=beam.counter+1
 
         self.effect_of_optical_element(beam)
-        self.effect_of_the_screen(beam)
+
+        if self.type != "Surface conical mirror 1":
+            self.effect_of_the_screen(beam)
 
         return beam
 
@@ -225,7 +234,7 @@ class Optical_element(object):
         self.intersection_with_optical_element(beam)
 
         beam.plot_yx()
-        plt.title("footprint")
+        plt.title("footprint %s" %(self.type))
 
         self.output_direction_from_optical_element(beam)
 
@@ -462,11 +471,12 @@ class Optical_element(object):
 
 
         ccc=self.ccc_object.get_coefficients()
-        aa=1/np.sqrt(-ccc[0])
         z0= -ccc[8]/2
+        aa=np.sqrt(-z0**2-ccc[9])
         a= -beam.vx**2-beam.vy**2+beam.vz**2
         b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
         c= -beam.x**2-beam.y**2+beam.z**2-1*aa**2+z0**2-2*beam.z*z0
+
 
         #c = self.ccc_object.get_coefficients()
 
@@ -482,6 +492,10 @@ class Optical_element(object):
         #else:
         #    t = (-b - np.sqrt(b ** 2 - 4 * a * cc)) / (2 * a)
 
+
+        #print(np.mean(a), np.mean(b), np.mean(cc))
+
+
         t1 = (-b - np.sqrt(b ** 2 - a * c)) / a
         t2 = (-b + np.sqrt(b ** 2 - a * c)) / a
 
@@ -494,8 +508,6 @@ class Optical_element(object):
             t=t1
         else:
             t=t2
-
-        print("The value of t1, t2, and t are respectivelly:\nt1=%f    t2=%f    t=%f"   %(np.mean(t1[0]), np.mean(t2[0]), np.mean(t[0])))
 
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
@@ -526,7 +538,6 @@ class Optical_element(object):
         else:
             t=t2
 
-        print("The value of t1, t2, and t are respectivelly:\nt1=%f    t2=%f    t=%f"   %(np.mean(t1[0]), np.mean(t2[0]), np.mean(t[0])))
 
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
@@ -534,43 +545,107 @@ class Optical_element(object):
 
 
 
+    def output_frame_wolter(self,beam):
+        test_ray = Vector(np.mean(beam.vx), np.mean(beam.vy), np.mean(beam.vz))
+        #test_ray = Vector(beam.vx[0], beam.vy[0], beam.vz[0])
+        velocity = Vector (beam.vx, beam.vy, beam.vz)
+        test_ray.normalization()
+
+        s=1.
+        t=2.
+        if np.abs(test_ray.x) < 1e-2 and np.abs(test_ray.y) < 1e-2:
+            print("1")
+            ort = Vector(s, 0, 0.)
+        elif np.abs(test_ray.z) < 1e-2 and np.abs(test_ray.y) < 1e-2:
+            print("2")
+            ort = Vector(0., s, 0)
+        elif np.abs(test_ray.x) < 1e-2 and np.abs(test_ray.z) < 1e-2:
+            print("3")
+            ort = Vector(s, 0., 0.)
+        elif np.abs(test_ray.x) < 1e-10:
+            print("4")
+            ort = Vector(s, t, -test_ray.y / test_ray.z * t)
+        elif np.abs(test_ray.y) < 1e-10:
+            print("5")
+            ort = Vector(t, s, -test_ray.x / test_ray.z * t)
+        elif np.abs(test_ray.z) < 1e-10:
+            print("6")
+            ort = Vector(t, -test_ray.x / test_ray.y * t, s)
+        else:
+            print("last possibility")
+            ort = Vector(s, t, -(test_ray.x * s + test_ray.y * t) / test_ray.z)
+
+        ort.normalization()
+
+        if np.abs(test_ray.x) < 1e-2 and np.abs(test_ray.y) < 1e-2:
+            print("1")
+            perp = Vector(0., 1., 0.)
+        elif np.abs(test_ray.z) < 1e-2 and np.abs(test_ray.y) < 1e-2:
+            print("2")
+            perp = Vector(0., 0., 1.)
+        elif np.abs(test_ray.x) < 1e-2 and np.abs(test_ray.z) < 1e-2:
+            print("3")
+            perp = Vector(0., 0., 1.)
+        elif np.abs(test_ray.x) < 1e-10:
+            print("4")
+            t = s*ort.z/(test_ray.x/test_ray.y*ort.y-ort.x)
+            perp = Vector(s, t, -test_ray.y / test_ray.z * t)
+        elif np.abs(test_ray.y) < 1e-10:
+            print("5")
+            t = s*ort.y/(test_ray.x/test_ray.z*ort.z-ort.x)
+            perp = Vector(t, s, -test_ray.x / test_ray.z * t)
+        elif np.abs(test_ray.z) < 1e-10:
+            print("6")
+            t = s*ort.x/(test_ray.y/test_ray.z*ort.z-ort.y)
+            perp = Vector(t, -test_ray.x / test_ray.y * t, s)
+        else:
+            print("last possibility")
+            t = s*(ort.z*test_ray.x/test_ray.z-ort.x)/(ort.y-ort.z*test_ray.y/test_ray.z)
+            perp = Vector(s, t, -(test_ray.x * s + test_ray.y * t) / test_ray.z)
+
+        perp.normalization()
+
+        y = velocity.dot(test_ray)
+        z = velocity.dot(ort)
+        x = velocity.dot(perp)
+
+        [beam.vx, beam.vy, beam.vz] = [x, y, z]
 
 
-
-    def trace_Wolter_1(self, beam1):
-
+    def trace_Wolter_1(self, beam1, z0):
 
         beam=beam1.duplicate()
         beam.counter=beam.counter+1
 
-        #
-        # change beam to o.e. frame
-        #
-        self.rotation_to_the_optical_element(beam)
-        self.translation_to_the_optical_element(beam)
-        self.intersection_with_optical_element(beam)      #####intersection with the paraboloid
+
+        self.effect_of_optical_element(beam)
+        self.q = 0.
+        self.theta = 90.*np.pi/180
+        self.effect_of_the_screen(beam)
 
 
-        self.output_direction_from_optical_element(beam)
-
-        hyper = Optical_element.initialize_my_hyperboloid(p=25,q=np.sqrt(2),theta=90*np.pi/180,alpha=0,wolter=1)                                                     ##### we have to introduce the hyperboloid
-        hyper.rotation_to_the_optical_element(beam)
-        hyper.intersection_with_optical_element(beam)                                                     #####intersection with the hyperboloid with neither rotation and translation
-        hyper.output_direction_from_optical_element(beam)                                                     ##### output direction w.r.t. the hyperboloid mirror
-
-        print(beam.vx,beam.vy,beam.vz)
-
-        self.q=self.q+2*np.sqrt(2)
-        self.rotation_to_the_screen(beam)
+        hyper = Optical_element.initialize_my_hyperboloid(p=0., q=z0 + (z0 - self.focal), theta=90*np.pi/180, alpha=0, wolter=1, z0=z0, distance_of_focalization=self.focal)
+        hyper.effect_of_optical_element(beam)
 
 
-        self.translation_to_the_screen(beam)
-        self.intersection_with_the_screen(beam)
-#
+        #self.q = z0 + (z0 - self.q)
+        self.q = z0 + (z0 - self.focal)
+
+        hyper.theta = 0.
+
+        print(self.q)
+        #self.effect_of_the_screen(beam)
+
+        hyper.effect_of_the_screen(beam)
+
+
+        self.output_frame_wolter(beam)
+
+
         return beam
 
 
-    def trace_Wolter_2(self, beam1):
+    def trace_Wolter_2(self, beam1, z0):
         beam = beam1.duplicate()
         beam.counter = beam.counter + 1
 
@@ -583,27 +658,21 @@ class Optical_element(object):
 
         self.output_direction_from_optical_element(beam)
 
-        hyper = Optical_element.initialize_my_hyperboloid(p=25 - np.sqrt(2), q=np.sqrt(2), theta=90*np.pi/180,
+        hyper = Optical_element.initialize_my_hyperboloid(p=z0, q=self.q, theta=90*np.pi/180,
                                                           alpha=0, wolter=2)  ##### we have to introduce the hyperboloid
-        #hyper.rotation_to_the_optical_element(beam)
-        hyper.intersection_with_optical_element(
-            beam)  #####intersection with the hyperboloid with neither rotation and translation
+        hyper.rotation_to_the_optical_element(beam)
+        hyper.intersection_with_optical_element(beam)  #####intersection with the hyperboloid with neither rotation and translation
         hyper.output_direction_from_optical_element(beam)  ##### output direction w.r.t. the hyperboloid mirror
 
 
-
-        #t = - beam.x / beam.vx
-
-        #beam.x = beam.x + beam.vx * t
-        #beam.y = beam.y + beam.vy * t
-        #beam.z = beam.z + beam.vz * t
-
-
-        self.q = 25.-2*np.sqrt(2)
+        self.q = hyper.p + (hyper.p -self.q)
         self.rotation_to_the_screen(beam)
 
         self.translation_to_the_screen(beam)
         self.intersection_with_the_screen(beam)
+
+
+        self.output_frame_wolter(beam)
 
         return beam
 
