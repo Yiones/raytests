@@ -7,7 +7,7 @@ from SurfaceConic import SurfaceConic
 
 class Optical_element(object):
 
-    def __init__(self,p,q,theta=0.0,alpha=0.0):
+    def __init__(self,p=0. ,q=0. ,theta=0.0,alpha=0.0):
         self.p = p
         self.q = q
         self.theta = theta
@@ -105,35 +105,27 @@ class Optical_element(object):
 
 
     @classmethod
-    def initialize_my_hyperboloid(cls,p,q,theta=0.0,alpha=0.0, wolter=None, z0=0, distance_of_focalization=0):
+    def initialize_my_hyperboloid(cls,p,q,theta=0.0,alpha=0.0, wolter=None, z0=0., distance_of_focalization=0.):
         oe=Optical_element(p,q,theta,alpha)
-        oe.type = "Surface conical mirror 1"
-        #oe.ccc_object = SurfaceConic(np.array([-1.,-1.,1.,0,0,0,0,0,0,-1.]))
-        #a= q/np.sqrt(2)
+        oe.type = "My hyperbolic mirror"
         a=q/np.sqrt(2)
         if wolter==1:
-            a=abs(z0-distance_of_focalization)/np.sqrt(2)
-        if wolter==2:
-            z0 = p
-            a=abs(z0-q)/np.sqrt(2)
-        #oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1/a**2, 0, 0, 0, 0., 0., -2*z0, -z0**2-1.]))
+            a = abs(z0-distance_of_focalization)/np.sqrt(2)
+        if wolter == 2:
+            a = abs(z0-distance_of_focalization)/np.sqrt(2)
+        if wolter == 3:
+            a = distance_of_focalization/np.sqrt(2)
         oe.ccc_object = SurfaceConic(np.array([-1, -1, 1, 0, 0, 0, 0., 0., -2*z0, -z0**2-a**2.]))
         return oe
 
-
     @classmethod
-    def initialize_my_hyperboloid2(cls,p,q,theta=0.0,alpha=0.0, wolter=None):
-        oe=Optical_element(p,q,theta,alpha)
-        oe.type = "Surface conical mirror 2"
-        #oe.ccc_object = SurfaceConic(np.array([-1.,-1.,1.,0,0,0,0,0,0,-1.]))
-        a=q/np.sqrt(2)
-        y0=0
-        if wolter==1:
-            y0= (25. + np.sqrt(2)*a)
-        if wolter==2:
-            y0 = (25. - np.sqrt(2) * a)
-        oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1/a**2, 0, 0, 0, 0., -2*y0, 0., -y0**2-1.]))
+    def initialize_as_surface_conic_from_coefficients(cls, ccc):
+        oe = Optical_element()
+        oe.type = "Surface conical mirror"
+        oe.ccc_object = SurfaceConic(ccc)
         return oe
+
+
     #
     # initializers from focal distances
     #
@@ -182,8 +174,6 @@ class Optical_element(object):
         if switch_convexity:
             oe.ccc_object.switch_convexity()
 
-        print(oe.ccc_object.get_coefficients())
-
         return oe
 
 
@@ -217,7 +207,7 @@ class Optical_element(object):
 
         self.effect_of_optical_element(beam)
 
-        if self.type != "Surface conical mirror 1":
+        if self.type != "My hyperbolic mirror":
             self.effect_of_the_screen(beam)
 
         return beam
@@ -233,10 +223,14 @@ class Optical_element(object):
         self.translation_to_the_optical_element(beam)
         self.intersection_with_optical_element(beam)
 
-        beam.plot_yx()
+        beam.plot_yx(0)
         plt.title("footprint %s" %(self.type))
 
+        beam.plot_ypzp()
+        plt.title("Before mirror effect")
         self.output_direction_from_optical_element(beam)
+        beam.plot_ypzp()
+        plt.title("After mirror effect")
 
     def effect_of_the_screen(self,beam):
 
@@ -254,10 +248,8 @@ class Optical_element(object):
             self._intersection_with_spherical_mirror(beam)
         elif self.type == "Surface conical mirror":
             self._intersection_with_surface_conic(beam)                     #self.intersection_with_surface_conic(beam)
-        elif self.type =="Surface conical mirror 1":
+        elif self.type =="My hyperbolic mirror":
             self._new_intersection(beam)
-        elif self.type =="Surface conical mirror 2":
-            self._new_intersection2(beam)
 
     def intersection_with_the_screen(self,beam):
         t= -beam.y/beam.vy
@@ -320,7 +312,7 @@ class Optical_element(object):
             normal = position.spherical_normal(self.R)
         elif self.type == "Surface conical mirror":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-        elif self.type == "Surface conical mirror 1":
+        elif self.type == "My hyperbolic mirror":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
         elif self.type == "Surface conical mirror 2":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
@@ -359,29 +351,6 @@ class Optical_element(object):
         else:
             self.mirror_output_direction(beam)
 
-#    def output_direction_from_optical_element(self, beam):
-#
-#        position=Vector(beam.x,beam.y,beam.z)
-#
-#        if self.type == "Plane mirror":
-#            normal=position.plane_normal()
-#        elif self.type == "Spherical mirror":
-#            normal=position.spherical_normal(self.R)
-#        elif self.type == "Surface conical mirror":
-#            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-#        elif self.type =="Surface conical mirror 1":
-#            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-#
-#
-#        normal.normalization()
-#
-#        velocity=Vector(beam.vx,beam.vy,beam.vz)
-#        vperp=velocity.perpendicular_component(normal)
-#        v2=velocity.sum(vperp)
-#        v2=v2.sum(vperp)
-#
-#        [beam.vx,beam.vy,beam.vz] = [ v2.x, v2.y, v2.z]
-#
 
     def rectangular_bound(self,bound):
         self.bound=bound
@@ -396,17 +365,43 @@ class Optical_element(object):
         beam.x = beam.x+beam.vx*t
         beam.y = beam.y+beam.vy*t
         beam.z = beam.z+beam.vz*t
+
+        indices = beam.flag >=0
+        beam.flag[indices] = beam.flag[indices] + 1
+
         if self.bound != None:
-            indices=np.where(beam.flag>=0)
-            beam.flag[indices] = np.zeros(beam.flag[indices].size)
-            beam.flag[indices] = beam.flag[indices]+(np.sign(beam.x[indices]-self.bound.xmin*np.ones(beam.flag[indices].size))-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(beam.y[indices]-self.bound.ymin*np.ones(beam.flag[indices].size))-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.xmax*np.ones(beam.flag[indices].size)-beam.x[indices])-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
-            beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
+            position_x=beam.x.copy()
+            indices = np.where(position_x < self.bound.xmin)
+            position_x[indices] = 0
+            indices = np.where(position_x > self.bound.xmax)
+            position_x[indices] = 0
+            indices = np.where(position_x == 0)
+            beam.flag[indices] = -1*beam.flag[indices]
+
+            position_y=beam.y.copy()
+            indices = np.where(position_y < self.bound.ymin)
+            position_y[indices] = 0
+            indices = np.where(position_y > self.bound.ymax)
+            position_y[indices] = 0
+            indices = np.where(position_y == 0)
+            beam.flag[indices] = -1*beam.flag[indices]
+
+
+
+
+
+        #if self.bound != None:
+        #    indices=np.where(beam.flag>=0)
+        #    beam.flag[indices] = np.zeros(beam.flag[indices].size)
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.x[indices]-self.bound.xmin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.y[indices]-self.bound.ymin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.xmax*np.ones(beam.flag[indices].size)-beam.x[indices])-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
+        #    beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
 
 
     def _intersection_with_spherical_mirror(self, beam, ):
+
             a=beam.vx**2+beam.vy**2+beam.vz**2
             b=beam.x*beam.vx+beam.y*beam.vy+beam.z*beam.vz-beam.vz*self.R                             #This is not b but b/2
             c=beam.x**2+beam.y**2+beam.z**2-2*beam.z*self.R
@@ -422,15 +417,58 @@ class Optical_element(object):
 
             if self.bound != None:
                 indices = np.where(beam.flag >= 0)
+                indices0 = indices
                 beam.flag[indices] = np.zeros(beam.flag[indices].size)
-                beam.flag[indices] = beam.flag[indices] + (np.sign(beam.x[indices] - self.bound.xmin * np.ones(beam.flag[indices].size)) - 1) / 2
-                beam.flag[indices] = beam.flag[indices] + (np.sign(beam.y[indices] - self.bound.ymin * np.ones(beam.flag[indices].size)) - 1) / 2
-                beam.flag[indices] = beam.flag[indices] + (np.sign(self.bound.xmax * np.ones(beam.flag[indices].size) - beam.x[indices]) - 1) / 2
-                beam.flag[indices] = beam.flag[indices] + (np.sign(self.bound.ymax * np.ones(beam.flag[indices].size) - beam.y[indices]) - 1) / 2
-                beam.flag[indices] = np.sign(np.sign(beam.flag[indices]) + 0.5) * beam.counter
+                beam.flag[indices] =  (np.sign(beam.x[indices] - self.bound.xmin * np.ones(beam.flag[indices].size)) - 1) / 2
+                indices = np.where(beam.flag >= 0)
+                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+                beam.flag[indices] =  (np.sign(beam.y[indices] - self.bound.ymin * np.ones(beam.flag[indices].size)) - 1) / 2
+                indices = np.where(beam.flag >= 0)
+                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+                beam.flag[indices] = (np.sign(self.bound.xmax * np.ones(beam.flag[indices].size) - beam.x[indices]) - 1) / 2
+                indices = np.where(beam.flag >= 0)
+                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+                beam.flag[indices] =  (np.sign(self.bound.ymax * np.ones(beam.flag[indices].size) - beam.y[indices]) - 1) / 2
+
+                beam.flag[indices0] = np.sign(np.sign(beam.flag[indices0]) + 0.5) * beam.counter
+
+#            if self.bound != None:
+#                indices = np.where(beam.flag >= 0)
+#                print(np.size(indices))
+#                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+#                beam.flag[indices] = beam.flag[indices] * 0 + (
+#                            np.sign(beam.x[indices] - self.bound.xmin * np.ones(beam.flag[indices].size)) - 1) / 2
+#                indices = np.where(beam.flag >= 0)
+#                print(np.size(indices))
+#                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+#                beam.flag[indices] = beam.flag[indices] * 0 + (
+#                            np.sign(beam.y[indices] - self.bound.ymin * np.ones(beam.flag[indices].size)) - 1) / 2
+#                indices = np.where(beam.flag >= 0)
+#                print(np.size(indices))
+#                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+#                beam.flag[indices] = beam.flag[indices] * 0 + (
+#                            np.sign(self.bound.xmax * np.ones(beam.flag[indices].size) - beam.x[indices]) - 1) / 2
+#                indices = np.where(beam.flag >= 0)
+#                print(np.size(indices))
+#                beam.flag[indices] = np.zeros(beam.flag[indices].size)
+#                beam.flag[indices] = beam.flag[indices] * 0 + (
+#                            np.sign(self.bound.ymax * np.ones(beam.flag[indices].size) - beam.y[indices]) - 1) / 2
+#                beam.flag[indices] = np.sign(np.sign(beam.flag[indices]) + 0.5) * beam.counter
+#
+
+
+            print(beam.flag)
+            print(np.mean(beam.flag))
 
 
     def _intersection_with_surface_conic(self, beam):
+
+
+        indices = beam.flag >=0
+        beam.flag[indices] = beam.flag[indices] + 1
+        counter = beam.flag[indices][0]
+
+
 
         t_source = 0.0
         [t1, t2, flag] = self.ccc_object.calculate_intercept(np.array([beam.x, beam.y, beam.z]),
@@ -451,23 +489,55 @@ class Optical_element(object):
 
 
 
+        beam.counter = 1
+
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
         beam.z = beam.z + beam.vz * t
 
+
         if self.bound != None:
-            indices=np.where(beam.flag>=0)
-            beam.flag[indices] = np.zeros(beam.flag[indices].size)
-            beam.flag[indices] = beam.flag[indices]+(np.sign(beam.x[indices]-self.bound.xmin*np.ones(beam.flag[indices].size))-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(beam.y[indices]-self.bound.ymin*np.ones(beam.flag[indices].size))-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.xmax*np.ones(beam.flag[indices].size)-beam.x[indices])-1)/2
-            beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
-            beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
+            position_x=beam.x.copy()
+            indices = np.where(position_x < self.bound.xmin)
+            position_x[indices] = 0
+            indices = np.where(position_x > self.bound.xmax)
+            position_x[indices] = 0
+            indices = np.where(position_x == 0)
+            beam.flag[indices] = -1*counter
+
+            position_y=beam.y.copy()
+            indices = np.where(position_y < self.bound.ymin)
+            position_y[indices] = 0
+            indices = np.where(position_y > self.bound.ymax)
+            position_y[indices] = 0
+            indices = np.where(position_y == 0)
+            beam.flag[indices] = -1*counter
+
+
+
+
+        #if self.bound != None:
+        #    indices=np.where(beam.flag>=0)
+        #    beam.flag[indices] = np.zeros(beam.flag[indices].size)
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.x[indices]-self.bound.xmin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.y[indices]-self.bound.ymin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.xmax*np.ones(beam.flag[indices].size)-beam.x[indices])-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
+        #    beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
+
+
+        #if self.bound != None:
+        #    indices=np.where(beam.flag>=0)
+        #    beam.flag[indices] = np.zeros(beam.flag[indices].size)
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.x[indices]-self.bound.xmin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(beam.y[indices]-self.bound.ymin*np.ones(beam.flag[indices].size))-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.xmax*np.ones(beam.flag[indices].size)-beam.x[indices])-1)/2
+        #    beam.flag[indices] = beam.flag[indices]+(np.sign(self.bound.ymax*np.ones(beam.flag[indices].size)-beam.y[indices])-1)/2
+        #    beam.flag[indices] = np.sign(np.sign(beam.flag[indices])+0.5)*beam.counter
 
 
 
     def _new_intersection(self, beam):
-
 
 
         ccc=self.ccc_object.get_coefficients()
@@ -476,6 +546,9 @@ class Optical_element(object):
         a= -beam.vx**2-beam.vy**2+beam.vz**2
         b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
         c= -beam.x**2-beam.y**2+beam.z**2-1*aa**2+z0**2-2*beam.z*z0
+
+
+
 
 
         #c = self.ccc_object.get_coefficients()
@@ -551,8 +624,8 @@ class Optical_element(object):
         velocity = Vector (beam.vx, beam.vy, beam.vz)
         test_ray.normalization()
 
-        s=1.
-        t=2.
+        s = 0.00000000000000000000000000000000000000000000000000000000001
+        t = 2.
         if np.abs(test_ray.x) < 1e-2 and np.abs(test_ray.y) < 1e-2:
             print("1")
             ort = Vector(s, 0, 0.)
@@ -628,16 +701,8 @@ class Optical_element(object):
         hyper.effect_of_optical_element(beam)
 
 
-        #self.q = z0 + (z0 - self.q)
-        self.q = z0 + (z0 - self.focal)
-
         hyper.theta = 0.
-
-        print(self.q)
-        #self.effect_of_the_screen(beam)
-
         hyper.effect_of_the_screen(beam)
-
 
         self.output_frame_wolter(beam)
 
@@ -645,31 +710,23 @@ class Optical_element(object):
         return beam
 
 
-    def trace_Wolter_2(self, beam1, z0):
+    def trace_Wolter_2(self, beam1, z0=0.):
         beam = beam1.duplicate()
         beam.counter = beam.counter + 1
 
-        #
-        # change beam to o.e. frame
-        #
-        self.rotation_to_the_optical_element(beam)
-        self.translation_to_the_optical_element(beam)
-        self.intersection_with_optical_element(beam)  #####intersection with the paraboloid
 
-        self.output_direction_from_optical_element(beam)
+        self.effect_of_optical_element(beam)
 
-        hyper = Optical_element.initialize_my_hyperboloid(p=z0, q=self.q, theta=90*np.pi/180,
-                                                          alpha=0, wolter=2)  ##### we have to introduce the hyperboloid
-        hyper.rotation_to_the_optical_element(beam)
-        hyper.intersection_with_optical_element(beam)  #####intersection with the hyperboloid with neither rotation and translation
-        hyper.output_direction_from_optical_element(beam)  ##### output direction w.r.t. the hyperboloid mirror
+        #hyper = Optical_element.initialize_my_hyperboloid(p=0., q=-self.focal, theta=90 * np.pi / 180, alpha=0, wolter=2, z0=z0, distance_of_focalization=self.focal)
+        hyper = Optical_element.initialize_my_hyperboloid(p=0., q=-(self.focal-2*z0), theta=90 * np.pi / 180, alpha=0, wolter=2, z0=z0, distance_of_focalization=self.focal)
+
+        hyper.effect_of_optical_element(beam)
 
 
-        self.q = hyper.p + (hyper.p -self.q)
-        self.rotation_to_the_screen(beam)
+        hyper.theta = 0.
+        hyper.effect_of_the_screen(beam)
 
-        self.translation_to_the_screen(beam)
-        self.intersection_with_the_screen(beam)
+
 
 
         self.output_frame_wolter(beam)
