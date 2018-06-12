@@ -12,7 +12,6 @@ class Optical_element(object):
         self.q = q
         self.theta = theta
         self.alpha = alpha
-        self.counter=0
         self.type="None"
         self.bound = None
 
@@ -26,7 +25,7 @@ class Optical_element(object):
 
 
 
-    def set_parameters(self,p=None,q=None,theta=None,alpha=None):
+    def set_parameters(self,p=None,q=None,theta=None,alpha=None, type="None"):
 
         if p is not None:
             self.p = p
@@ -36,7 +35,11 @@ class Optical_element(object):
             self.theta = theta
         if alpha is not None:
             self.alpha = alpha
+        if type is not "None":
+            self.type = type
 
+    def set_bound(self,bound):
+        self.bound = bound
 
 
     #
@@ -115,21 +118,23 @@ class Optical_element(object):
         a=q/np.sqrt(2)
         b = 1
         if wolter ==1:
-            a = abs(z0-distance_of_focalization)/np.sqrt(2)
+            a = abs(z0 - distance_of_focalization) / np.sqrt(2)
         if wolter == 2:
             a = abs(z0-distance_of_focalization)/np.sqrt(2)
         if wolter == 1.1:
             a = distance_of_focalization/np.sqrt(2)
 
-        b = a
-        print("The value of a at the beggining is: %f"  %(a))
-        print("The value of b at the beggining is: %f"  %(b))
-        oe.ccc_object = SurfaceConic(np.array([-1, -1, 1, 0, 0, 0, 0., 0., -2*z0, -z0**2-a**2.]))
-        oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1*b**2, 0, 0, 0, 0., 0., -2*z0/b**2, z0**2/b**2-1]))
-        print("Manual")
-        c2 = 1/b**2
-        print(c2, -1/a**2, 1/b**2)
-        oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, c2, 0, 0, 0, 0., 0., -2*z0/b**2, z0**2/b**2-1]))
+        print("z0=%f, distance_of_focalization=%f, a*sqrt(2)=%f" %(z0,distance_of_focalization,a*np.sqrt(2)))
+        #b = a
+        #print("The value of a at the beggining is: %f"  %(a))
+        #print("The value of b at the beggining is: %f"  %(b))
+        #oe.ccc_object = SurfaceConic(np.array([-1, -1, 1, 0, 0, 0, 0., 0., -2*z0, -z0**2-a**2.]))
+        oe.ccc_object = SurfaceConic(np.array([-1, -1, 1, 0, 0, 0, 0., 0., -2 * z0, z0 ** 2 - a ** 2.]))
+        #oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, 1*b**2, 0, 0, 0, 0., 0., -2*z0/b**2, z0**2/b**2-1]))
+        #print("Manual")
+        #c2 = 1/b**2
+        #print(c2, -1/a**2, 1/b**2)
+        #oe.ccc_object = SurfaceConic(np.array([-1/a**2, -1/a**2, c2, 0, 0, 0, 0., 0., -2*z0/b**2, z0**2/b**2-1]))
         return oe
 
 
@@ -168,6 +173,7 @@ class Optical_element(object):
     @classmethod
     def initialize_as_surface_conic_paraboloid_from_focal_distances(cls, p, q, theta=0., alpha=0,  infinity_location="q", focal=None, cylindrical=0, cylangle=0.0,
                                                       switch_convexity=0):
+        print("p is %d" %(p))
         oe=Optical_element(p,q,theta,alpha)
         oe.type="Surface conical mirror"
         oe.focal=focal
@@ -232,7 +238,7 @@ class Optical_element(object):
 
         self.rotation_to_the_optical_element(beam)
         self.translation_to_the_optical_element(beam)
-        self.intersection_with_optical_element(beam)
+        [beam, t]=self.intersection_with_optical_element(beam)
         self.output_direction_from_optical_element(beam)
 
 
@@ -240,24 +246,29 @@ class Optical_element(object):
 
         self.rotation_to_the_screen(beam)
         self.translation_to_the_screen(beam)
-        self.intersection_with_the_screen(beam)
+        if np.abs(self.q) > 1e-13:
+            print(self.type)
+            self.intersection_with_the_screen(beam)
 
 
     def intersection_with_optical_element(self, beam):
         if self.type == "Plane mirror":
-            self._intersection_with_plane_mirror(beam)
+            [beam, t] =self._intersection_with_plane_mirror(beam)
         elif self.type == "Ideal lens":
-            self._intersection_with_plane_mirror(beam)
+            [beam, t] =self._intersection_with_plane_mirror(beam)
         elif self.type == "Spherical mirror":
-            self._intersection_with_spherical_mirror(beam)
+            [beam, t] =self._intersection_with_spherical_mirror(beam)
         elif self.type == "Surface conical mirror":
-            self._intersection_with_surface_conic(beam)
+            [beam, t] =self._intersection_with_surface_conic(beam)
         elif self.type =="My hyperbolic mirror":
-            self._intersection_with_my_hyperbolic_mirror(beam)
+            [beam, t] =self._intersection_with_my_hyperbolic_mirror(beam)
+
+        return [beam, t]
 
 
     def intersection_with_the_screen(self,beam):
-        t= -beam.y/beam.vy
+        t = -beam.y / beam.vy
+
         beam.x = beam.x+beam.vx*t
         beam.y = beam.y+beam.vy*t
         beam.z = beam.z+beam.vz*t
@@ -395,6 +406,9 @@ class Optical_element(object):
             beam.flag[indices] = -1 * counter
 
 
+        return [beam, t]
+
+
     def _intersection_with_spherical_mirror(self, beam, ):
 
         indices = beam.flag >= 0
@@ -430,11 +444,11 @@ class Optical_element(object):
             position_y[indices] = 0
             indices = np.where(position_y == 0)
             beam.flag[indices] = -1 * counter
+
+
+        return [beam, t]
 #
 
-
-        print(beam.flag)
-        print(np.mean(beam.flag))
 
 
     def _intersection_with_surface_conic(self, beam):
@@ -442,7 +456,8 @@ class Optical_element(object):
 
         indices = beam.flag >=0
         beam.flag[indices] = beam.flag[indices] + 1
-        counter = beam.flag[indices][0]
+        #counter = beam.flag[indices][0]
+        counter = beam.flag[0]*np.sign(beam.flag[0])
 
 
 
@@ -450,27 +465,30 @@ class Optical_element(object):
         [t1, t2, flag] = self.ccc_object.calculate_intercept(np.array([beam.x, beam.y, beam.z]),
                                                         np.array([beam.vx, beam.vy, beam.vz]))
 
-        #if np.abs(np.mean(t1)) <= np.abs(np.mean(t2)):
-        #    t=t2
-        #else:
-        #    t=t2
-
         t=np.ones(beam.N)
 
-        for i in range (beam.N):
-            if np.abs(t1[i]-t_source >= np.abs(t2[i]-t_source)):
-                t[i]=t1[i]
-            else:
-                t[i]=t2[i]
+        # todo: leave the for loop
+        #for i in range (beam.N):
+        #    if np.abs(t1[i]-t_source >= np.abs(t2[i]-t_source)):
+        #        t[i]=t1[i]
+        #    else:
+        #        t[i]=t2[i]
 
+        print("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nFor the parabolic mirror\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+        print(np.mean(t1), np.mean(t2))
 
+        if np.abs(np.mean(t1-t_source) >= np.abs(np.mean(t2-t_source))):
+            t=t1
+        else:
+            t=t2
+
+        print("\n%s:   t1=%f, t2=%f" %(self.type, np.mean(t1), np.mean(t2)))
 
         beam.counter = 1
 
         beam.x = beam.x + beam.vx * t
         beam.y = beam.y + beam.vy * t
         beam.z = beam.z + beam.vz * t
-
 
         if self.bound != None:
             position_x=beam.x.copy()
@@ -490,6 +508,9 @@ class Optical_element(object):
             beam.flag[indices] = -1*counter
 
 
+        return [beam, t]
+
+
 
 
     def _intersection_with_my_hyperbolic_mirror(self, beam):
@@ -500,20 +521,20 @@ class Optical_element(object):
 
 
         ccc=self.ccc_object.get_coefficients()
-        z0= -ccc[8]/2
-        aa=np.sqrt(-z0**2-ccc[9])
-        aa = 17.677670
-        print(z0, aa)
-        a= -beam.vx**2-beam.vy**2+beam.vz**2
-        b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
-        c= -beam.x**2-beam.y**2+beam.z**2-1*aa**2+z0**2-2*beam.z*z0
+        #z0= -ccc[8]/2
+        #aa=np.sqrt(-z0**2-ccc[9])
+        #aa = 17.677670
+        #print(z0, aa)
+        #a= -beam.vx**2-beam.vy**2+beam.vz**2
+        #b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
+        #c= -beam.x**2-beam.y**2+beam.z**2-1*aa**2+z0**2-2*beam.z*z0
 
         #ah = np.sqrt(-1/ccc[0])
         #bh = np.sqrt(1/ccc[2])
 
         #print(ccc)
 
-        #z0 = -ccc[8]*bh**2/2
+        #z0 = -ccc[8]**2/2
 
         #print("ah = %f, bh = %f, z0 = %f"  %(ah,bh,z0))
 
@@ -522,20 +543,58 @@ class Optical_element(object):
         #c = -ah*beam.x**2 - ah*beam.y**2 + bh*beam.z**2 -2*bh*z0*beam.z + b*z0**2 -1
 
 
-        #z0 = -ccc[8] / 2*bh**2
-        #aa = np.sqrt(-z0 ** 2 - ccc[9])
-        #aa = np.sqrt(-1 / ccc[0])
-        #z0 = 0.
-        #aa = 17.677670
-        #a = -beam.vx ** 2 - beam.vy ** 2 + beam.vz ** 2
-        #b = -beam.x * beam.vx - beam.y * beam.vy + beam.z * beam.vz - z0 * beam.vz
-        #c = -beam.x ** 2 - beam.y ** 2 + beam.z ** 2 - 1 * aa ** 2 + z0 ** 2 - 2 * beam.z * z0
+#############  old one   ##################################################################################################
+#
+#        z0 = -ccc[8] / 2
+#        aa = np.sqrt(-z0 ** 2 - ccc[9])
+#        a= -beam.vx**2-beam.vy**2+beam.vz**2
+#        b= -beam.x*beam.vx-beam.y*beam.vy+beam.z*beam.vz-z0*beam.vz
+#        c= -beam.x**2-beam.y**2+beam.z**2-1*aa**2+z0**2-2*beam.z*z0
+#
+########################################################################################################################
+
+############  new one   ##################################################################################################
+
+
+        c0 = ccc[0]
+        c1 = ccc[2]
+        c2 = ccc[8]
+        c3 = ccc[9]
+
+        #print("\nc0=%f, c1=%f, c2=%f, c3=%f" %(c0,c1,c2,c3))
+        #print("\nInitial position: x=%f, y= %f, z=%f\nInitial velocity: vx=%f, vy=%f, vz=%f\n"  %(np.mean(beam.x), np.mean(beam.y), np.mean(beam.z), np.mean(beam.vx), np.mean(beam.vy), np.mean(beam.vz)))
+        #print(np.mean(beam.vx))
+        #print(beam.vx, beam.vy, beam.vz)
+
+        #a = c0*beam.vx*2 + c0*beam.vy**2 + c1*beam.vz**2
+        a = c1*beam.vz**2 + c0*(beam.vx**2 + beam.vy**2)
+        b = c0*beam.x*beam.vx + c0*beam.y*beam.vy + c1*beam.z*beam.vz + c2*beam.vz/2
+        c = c0*beam.x**2 + c0*beam.y**2 + c1*beam.z**2 + c2*beam.z + c3
+
+        #print("ccc = %f, %f, %f, %f, %f, %f, %f, %f, %f, %f" %(ccc[0],ccc[1],ccc[2],ccc[3],ccc[4],ccc[5],ccc[6],ccc[7],ccc[8],ccc[9]))
+        #print(self.type)
+        #print("c0=%f, c1=%f, c2=%f, c3=%f" %(c0,c1,c2,c3))
+
+
+
+        #print("a")
+        #print(a)
+        #print("b")
+        #print(b)
+        #print("c")
+        #print(c)
+        #print("mean(a)=%f, mean(b)=%f, mean(c)=%f"  %(np.mean(a), np.mean(b), np.mean(c)))
+        #print("b**2-a*c")
+        #print(b**2-a*c)
+
+#######################################################################################################################
+
+
 
 
         t1 = (-b - np.sqrt(b ** 2 - a * c)) / a
         t2 = (-b + np.sqrt(b ** 2 - a * c)) / a
 
-        print(np.mean(t1), np.mean(t2))
 
         if  np.mean(t1)*np.mean(t2)>1:
             if np.abs(np.mean(t1)) <= np.abs(np.mean(t2)):
@@ -570,11 +629,27 @@ class Optical_element(object):
             beam.flag[indices] = -1*counter
 
 
+        print("\n%s:   t1=%f, t2=%f" %(self.type, np.mean(t1), np.mean(t2)))
+
+        return [beam, t]
+
 
 
 
     def output_frame_wolter(self,beam):
-        test_ray = Vector(np.mean(beam.vx), np.mean(beam.vy), np.mean(beam.vz))
+
+        print("Hello World")
+        indices = np.where(beam.flag>=0)
+        print("The indices")
+        print(indices)
+        tx = np.mean(beam.vx[indices])
+        ty = np.mean(beam.vy[indices])
+        tz = np.mean(beam.vz[indices])
+        #tx = beam.vx[0]
+        #ty = beam.vy[0]
+        #tz = beam.vz[0]
+        #test_ray = Vector(np.mean(beam.vx[indices]), np.mean(beam.vy[indices]), np.mean(beam.vz)[indices])
+        test_ray = Vector(tx, ty, tz)
         #test_ray = Vector(beam.vx[0], beam.vy[0], beam.vz[0])
         velocity = Vector (beam.vx, beam.vy, beam.vz)
         test_ray.normalization()
@@ -671,4 +746,27 @@ class Optical_element(object):
 
         return beam
 
+    def info(self):
 
+        txt =""
+
+        if self.type == "None":
+            txt += ("No Optical element")
+        if self.type == "Plane mirror":
+            txt += ("%s\np=%f, q=%f, theta=%f, alpha=%f" %(self.type, self.p, self.q, self.theta, self.alpha))
+        if self.type == "Spherical mirror":
+            txt += ("%s\np=%f, q=%f, theta=%f, alpha=%f, R=%f" %(self.type, self.p, self.q, self.theta, self.alpha, self.R))
+        if self.type == "Ideal lens":
+            txt += ("%s\np=%f, q=%f, fx=%f, fz=%f" %(self.type, self.p, self.q, self.fx, self.fz))
+        if self.type == "Surface conical mirror" or self.type == "My hyperbolic mirror":
+            txt = ("%s\np=%f, q=%f, theta=%f, alpha=%f\n" %(self.type, self.p, self.q, self.theta, self.alpha))
+            for i in range(10):
+                if i != 9:
+                    txt += ("c%d=%f, " %(i,self.ccc_object.get_coefficients()[i]))
+                else:
+                    txt += ("c%d=%f" %(i,self.ccc_object.get_coefficients()[i]))
+
+        if self.bound is not None:
+            txt += "\nThe bounds are\n"
+            txt += self.bound.info()
+        return txt

@@ -20,11 +20,15 @@ beam.plot_xpzp()
 
 
 lens=Optical_element()
-lens.set_parameters(1.,1.)
+lens.set_parameters(p=2.,q=5.)
 
 beam=lens.trace_ideal_lens(beam)
 
 beam.plot_xz()
-beam.histogram()
+
+hyp=Optical_element.initialize_my_hyperboloid(p=5-np.sqrt(2),q=np.sqrt(2),theta=0)
+beam=hyp.trace_optical_element(beam)
+
+beam.plot_xz()
 
 plt.show()

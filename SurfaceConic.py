@@ -341,6 +341,7 @@ class SurfaceConic(object):
         #else:
         #    TPAR = - CC / BB
 
+
         TPAR = numpy.zeros_like(AA)
         T_SOURCE = 10.0
 
@@ -399,7 +400,6 @@ class SurfaceConic(object):
         self.ccc[9-1] =  A_9						 # Z
         self.ccc[10-1]=  A_10
 
-
     def switch_convexity(self):
         self.ccc[5-1]  = - self.ccc[5-1]
         self.ccc[6-1]  = - self.ccc[6-1]
@@ -446,6 +446,8 @@ class SurfaceConic(object):
 
         AXMAJ = ( ssour + simag )/2
         AXMIN = numpy.sqrt( simag * ssour) * COSTHE
+
+
         AFOCI = numpy.sqrt( AXMAJ**2 - AXMIN**2 )
         ECCENT = AFOCI/AXMAJ
         # ;C

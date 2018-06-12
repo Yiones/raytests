@@ -80,11 +80,12 @@ class Vector(object):
         return Vector(x,y,z)
 
 
-
+    def modulus(self):
+        return np.sqrt(self.x**2+self.y**2+self.z**2)
 
 
     def normalization(self):
-        mod=np.sqrt(self.x**2+self.y**2+self.z**2)
+        mod = self.modulus()
         self.x = self.x / mod
         self.y = self.y / mod
         self.z = self.z / mod
@@ -125,5 +126,4 @@ class Vector(object):
             for i in range(self.size()):
                 txt += "x: %f, y: %f, z: %f\n"%(self.x[i],self.y[i],self.z[i])
             return txt
-
 

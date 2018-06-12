@@ -11,6 +11,10 @@ class BoundaryRectangle(BoundaryShape):
         self.ymax = ymax
         self.ymin = ymin
 
+
+    def info(self):
+        return ("xmax=%f, xmin=%f, ymax=%f, ymin=%f"  %(self.xmax, self.xmin, self.ymax, self.ymin))
+
 class BoundaryCircle(BoundaryShape):
     def __init__(self,R):
         self.R=R
