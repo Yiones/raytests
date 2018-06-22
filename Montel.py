@@ -198,21 +198,21 @@ if main == "__main__":
 #########################################################################################################################
 
 
-    beam.plot_xz(0)
-    plt.title(case)
+    #beam.plot_xz(0)
+    #plt.title(case)
 
 
     print("mean(beam.x)=%f, mean(beam.y)=%f, mean(beam.z)=%f" %(np.mean(beam.x), np.mean(beam.y), np.mean(beam.z)))
 
 
-    plt.show()
+    #plt.show()
 
 
 if main == "__main__2__":
 
 
     beam = Beam(25000)
-    beam.set_flat_divergence(dx=0.000000000000001, dz=0.000000000000001)
+    beam.set_flat_divergence(dx=0.01, dz=0.01)
     beam.set_divergences_collimated()
 
     shadow_beam = shadow_source()
@@ -234,14 +234,14 @@ if main == "__main__2__":
     q = 15.
     theta = 88. * np.pi / 180
     beta = 90 * np.pi / 180
-    alpha = 90 * np.pi / 180 - theta
+    alpha = 87.*np.pi/180
 
 
     xmax =  0.
-    xmin = -0.5
-    ymax =  0.5
-    ymin = -0.5
-    zmax =  0.5
+    xmin = -0.4
+    ymax =  0.4
+    ymin = -0.4
+    zmax =  0.4
     zmin =  0.
 
     oe1 = Optical_element.initialize_as_surface_conic_ellipsoid_from_focal_distances(p=p, q=q, theta=theta, alpha=0.,
@@ -309,6 +309,16 @@ if main == "__main__2__":
     beam.x = beam.x - vector_point.x
     beam.y = beam.y - vector_point.y
     beam.z = beam.z - vector_point.z
+
+
+    beam.x = -beam.z.copy()
+    beam.vx = np.sqrt(1-beam.vy**2-beam.vz**2)
+
+    print("beam.x = %f, beam.y = %f, beam.z = %f" % (np.mean(beam.x), np.mean(beam.y), np.mean(beam.z)))
+    print("beam.vx = %f, beam.vy = %f, beam.vz = %f" % (np.mean(beam.vx), np.mean(beam.vy), np.mean(beam.vz)))
+
+    print("theta angle = %f"  %((np.arctan(np.mean(beam.z/beam.y))*180/np.pi)))
+    print("fi angle = %f"  %((np.arctan(np.mean(beam.x/beam.y))*180/np.pi)))
 
 ###### beam separation   ###############################################################################################
 
@@ -447,8 +457,10 @@ if main == "__main__2__":
 
     print("\nhello world")
 
-    t1[indices1] += 2*maxim
-    t2[indices2] += 2*maxim
+    print("Mean time: t1 = %f, t2 = %f" %(np.mean(t1), np.mean(t2)))
+
+    t1[indices1] = 1e12 * np.ones(np.size(indices1))
+    t2[indices2] = 1e12 * np.ones(np.size(indices1))
 
 
     t = np.minimum(t1,t2)
@@ -459,7 +471,8 @@ if main == "__main__2__":
 
 
 
-    indices = np.where(t>maxim)
+
+    indices = np.where(t==1e12)
     origin[indices] = 3
 
     beam3.flag += -1
@@ -494,6 +507,8 @@ if main == "__main__2__":
 
     oe1.output_direction_from_optical_element(beam01)
     beam01.flag *= 0
+
+    print("Rays that have reaced the oe1: %f"  %(beam01.N))
 
     beam2 = beam01.duplicate()
     beam3 = beam01.duplicate()
@@ -553,6 +568,11 @@ if main == "__main__2__":
     oe2.output_direction_from_optical_element(beam02)
 
 
+    print("Rays that have reaced the oe2: %f"  %(beam02.N))
+
+    #beam02.plot_xz()
+    #beam02.plot_zy()
+    #plt.show()
 
     beam02.flag *= 0
 
@@ -586,10 +606,12 @@ if main == "__main__2__":
     #beam1.plot_yx()
     #plt.title("beam1 with all rays")
 
+
     #beam1.plot_good_xz()
     #plt.title("beam1 with good rays")
     #beam1.plot_good_yx()
     #plt.title("beam1 with good rays")
+
 
     t = t1.copy()
     print(np.size(indices))
@@ -624,6 +646,9 @@ if main == "__main__2__":
     oe1.output_direction_from_optical_element(beam0001)
     oe2.output_direction_from_optical_element(beam002)
 
+    beam002.flag *= 0.
+    beam0001.flag *= 0.
+
     screen.intersection_with_optical_element(beam0001)
     screen.intersection_with_optical_element(beam002)
 
@@ -651,8 +676,11 @@ if main == "__main__2__":
     print("Total rays = %f\n\n" %(beam03.N+beam003.N+beam0003.N+beam_f.N))
 
 
-    beam_f.plot_xz()
-    beam_f.histogram()
+    plt.figure()
+    plt.plot(beam_f.x, beam_f.z, 'go')
+    plt.xlabel('x axis')
+    plt.ylabel('y axis')
+    #beam_f.histogram()
 
 
     plt.show()
