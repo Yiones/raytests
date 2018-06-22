@@ -274,7 +274,7 @@ if main == "__main__2__":
     print(oe2.info())
     print("\n")
 
-    ccc = np.array([0., 0., 0., 0., 0., 0., 0., 1., 0., -q])
+    ccc = np.array([0., 0., 0., 0., 0., 0., 0., 1., 0., -(q-0.055)])
 
     screen = Optical_element.initialize_as_surface_conic_from_coefficients(ccc)
     screen.set_parameters(p, q, 0., 0., "Surface conical mirror")
@@ -371,14 +371,16 @@ if main == "__main__2__":
 #    beam.plot_xz()
 #
 #
-#######  time comparasion  ##############################################################################################
+#######  Before for        ##############################################################################################
 
 
+    beam1 = beam.duplicate()
+    beam2 = beam.duplicate()
+    beam3 = beam.duplicate()
 
     [beam1, t1] = oe1.intersection_with_optical_element(beam1)
     [beam2, t2] = oe2.intersection_with_optical_element(beam2)
     [beam3, t3] = screen.intersection_with_optical_element(beam3)
-
 
     print(t1, t1[0])
     print(t2, t2[0])
@@ -386,22 +388,17 @@ if main == "__main__2__":
     print(beam.x[0], beam.y[0], beam.z[0])
     print(beam.vx[0], beam.vy[0], beam.vz[0])
 
+    # beam1.plot_xz(0)
+    # plt.title("beam1 before")
+    # beam1.plot_yx(0)
+    # plt.title("beam1 before")
 
-    #beam1.plot_xz(0)
-    #plt.title("beam1 before")
-    #beam1.plot_yx(0)
-    #plt.title("beam1 before")
+    # beam2.plot_xz(0)
+    # plt.title("beam2 before")
+    # beam2.plot_yx(0)
+    # plt.title("beam2 before")
 
-
-    #beam2.plot_xz(0)
-    #plt.title("beam2 before")
-    #beam2.plot_yx(0)
-    #plt.title("beam2 before")
-
-###########  Good rays beam1
-
-
-
+    ###########  Good rays beam1
 
     indices = np.where(beam1.x > xmax)
     beam1.flag[indices] = -1
@@ -418,11 +415,10 @@ if main == "__main__2__":
     indices = np.where(beam1.z < zmin)
     beam1.flag[indices] = -1
 
-
-    #beam1.plot_good_xz(0)
-    #plt.title("beam1 after")
-    #beam1.plot_good_yx(0)
-    #plt.title("beam1 after")
+    # beam1.plot_good_xz(0)
+    # plt.title("beam1 after")
+    # beam1.plot_good_yx(0)
+    # plt.title("beam1 after")
 
     ##########  Good rays beam2
 
@@ -441,246 +437,216 @@ if main == "__main__2__":
     indices = np.where(beam2.z < zmin)
     beam2.flag[indices] = -1
 
-    #beam2.plot_good_xz(0)
-    #plt.title("beam2 after")
-    #beam2.plot_good_yx(0)
-    #plt.title("beam2 after")
+    # beam2.plot_good_xz(0)
+    # plt.title("beam2 after")
+    # beam2.plot_good_yx(0)
+    # plt.title("beam2 after")
 
     ######first iteration##################################################################################################
 
-    indices1 = np.where(beam1.flag<0)
-    indices2 = np.where(beam2.flag<0)
+    indices1 = np.where(beam1.flag < 0)
+    indices2 = np.where(beam2.flag < 0)
 
-    print("max(t1) = %f, max(t2) = %f" %(np.max(t1), np.max(t2)))
+    print("max(t1) = %f, max(t2) = %f" % (np.max(t1), np.max(t2)))
 
     maxim = max(abs(np.max(t1)), abs(np.max(t2)))
 
     print("\nhello world")
 
-    print("Mean time: t1 = %f, t2 = %f" %(np.mean(t1), np.mean(t2)))
+    print("Mean time: t1 = %f, t2 = %f" % (np.mean(t1), np.mean(t2)))
 
     t1[indices1] = 1e12 * np.ones(np.size(indices1))
     t2[indices2] = 1e12 * np.ones(np.size(indices1))
 
-
-    t = np.minimum(t1,t2)
+    t = np.minimum(t1, t2)
     origin = np.ones(beam1.N)
 
-    indices = np.where(t2<t1)
+    indices = np.where(t2 < t1)
     origin[indices] += 1
 
-
-
-
-    indices = np.where(t==1e12)
+    indices = np.where(t == 1e12)
     origin[indices] = 3
 
     beam3.flag += -1
     beam3.flag[indices] = 0
 
-    indices = np.where(beam3.flag>=0)
+    indices = np.where(beam3.flag >= 0)
 
-    print("beam3 good rays = %d, bad rays = %d" %(np.size(indices), beam3.N-np.size(indices)))
+    print("beam3 good rays = %d, bad rays = %d" % (np.size(indices), beam3.N - np.size(indices)))
 
     t[indices] = t3[indices]
 
-
-    print("Rays on oe1 = %f" %(np.size(np.where(origin==1))))
-    print("Rays on oe2 = %f" %(np.size(np.where(origin==2))))
-    print("Rays on screen (No reflection)= %f" %(np.size(np.where(origin==3))))
+    print("Rays on oe1 = %f" % (np.size(np.where(origin == 1))))
+    print("Rays on oe2 = %f" % (np.size(np.where(origin == 2))))
+    print("Rays on screen (No reflection)= %f" % (np.size(np.where(origin == 3))))
 
     print(origin)
 
     #####3 good beam####################################################################################################
 
-    indices1 = np.where(origin==1)
+    indices1 = np.where(origin == 1)
     beam01 = beam1.part_of_beam(indices1)
-    indices1 = np.where(origin==2)
+    indices1 = np.where(origin == 2)
     beam02 = beam2.part_of_beam(indices1)
-    indices1 = np.where(origin==3)
+    indices1 = np.where(origin == 3)
     beam03 = beam3.part_of_beam(indices1)
 
-    print("The total size of the three beam is: %f + %f + %f = %f"  %(beam01.N, beam02.N, beam03.N, beam01.N+beam02.N+beam03.N))
+    print("The total size of the three beam is: %f + %f + %f = %f" % (
+    beam01.N, beam02.N, beam03.N, beam01.N + beam02.N + beam03.N))
 
 
-    ### Working with beam01  ############################################################################################
+   #######  Starting the for cicle   ###################################################################################
 
-    oe1.output_direction_from_optical_element(beam01)
-    beam01.flag *= 0
-
-    print("Rays that have reaced the oe1: %f"  %(beam01.N))
-
-    beam2 = beam01.duplicate()
-    beam3 = beam01.duplicate()
-
-    [beam2, t2] = oe2.intersection_with_optical_element(beam2)
-    [beam3, t3] = screen.intersection_with_optical_element(beam3)
-
-
-
-    indices = np.where(beam2.x > xmax)
-    beam2.flag[indices] = -1
-    indices = np.where(beam2.x < xmin)
-    beam2.flag[indices] = -1
-
-    indices = np.where(beam2.z > ymax)
-    beam2.flag[indices] = -1
-    indices = np.where(beam2.z < ymin)
-    beam2.flag[indices] = -1
-
-    indices = np.where(beam2.y > zmax)
-    beam2.flag[indices] = -1
-    indices = np.where(beam2.y < zmin)
-    beam2.flag[indices] = -1
-
-    indices = np.where(beam2.flag<0)
-    print("Bad rays that reach oe2 from oe1 = %f"  %(np.size(indices)))
-    maxim = np.max(abs(t2))
-
-    #print(t2, t3)
-
-    #beam2.plot_zy(0)
-    #beam2.plot_good_zy(0)
-
-
-    t = t2.copy()
-
-    t[indices] = t3[indices]
-
-    origin01 = 2*np.ones(beam01.N)
-    origin01[indices] += 1
-
-    print("The number of ray that reach screen (only one reflection VFM) = %f\n\n"  %(np.size(indices)))
-
-
-    indices1 = np.where(origin01==3)
-    beam003 = beam3.part_of_beam(indices1)
-    indices1 = np.where(origin01==2)
-    beam002 = beam2.part_of_beam(indices1)
-
-    #plt.figure()
-    #plt.plot(beam03.x, beam03.z, 'ro')
-    #plt.plot(beam003.x, beam003.z, 'bo')
-    #plt.axis('equal')
-
-    ### Working with beam02  ############################################################################################
-
-    oe2.output_direction_from_optical_element(beam02)
-
-
-    print("Rays that have reaced the oe2: %f"  %(beam02.N))
-
-    #beam02.plot_xz()
-    #beam02.plot_zy()
-    #plt.show()
-
-    beam02.flag *= 0
-
-    beam1 = beam02.duplicate()
-    beam3 = beam02.duplicate()
-
-    [beam1, t1] = oe1.intersection_with_optical_element(beam1)
-    [beam3, t3] = screen.intersection_with_optical_element(beam3)
-
-    indices = np.where(beam1.x > xmax)
-    beam1.flag[indices] = -1
-    indices = np.where(beam1.x < xmin)
-    beam1.flag[indices] = -1
-
-    indices = np.where(beam1.y > ymax)
-    beam1.flag[indices] = -1
-    indices = np.where(beam1.y < ymin)
-    beam1.flag[indices] = -1
-
-    indices = np.where(beam1.z > zmax)
-    beam1.flag[indices] = -1
-    indices = np.where(beam1.z < zmin)
-    beam1.flag[indices] = -1
-
-    indices = np.where(beam1.flag<0)
-    print("Bad rays that reach oe2 from oe1 = %f"  %(np.size(indices)))
-    maxim = np.max(abs(t2))
-
-    #beam1.plot_xz()
-    #plt.title("beam1 with all rays")
-    #beam1.plot_yx()
-    #plt.title("beam1 with all rays")
-
-
-    #beam1.plot_good_xz()
-    #plt.title("beam1 with good rays")
-    #beam1.plot_good_yx()
-    #plt.title("beam1 with good rays")
-
-
-    t = t1.copy()
-    print(np.size(indices))
-
-    t[indices] = t3[indices]
-
-
-    print("The number of ray that reach screen (only one reflection HFM) = %f"  %(np.size(indices)))
-
-    origin02 = np.ones(beam02.N)
-    origin02[indices] += 2
-
-
-    indices1 = np.where(origin02==3)
-    beam0003 = beam3.part_of_beam(indices1)
-    indices1 = np.where(origin02==1)
-    beam0001 = beam1.part_of_beam(indices1)
-
-    print(np.size(beam0003.x))
-
-    #plt.figure()
-    #plt.plot(beam03.x, beam03.z, 'ro')
-    #plt.plot(beam003.x, beam003.z, 'bo')
-    #plt.plot(beam0003.x, beam0003.z, 'yo')
-    #plt.axis('equal')
+    beam1_list = [beam01.duplicate(), Beam(), Beam(), Beam(), Beam()]
+    beam2_list = [beam02.duplicate(), Beam(), Beam(), Beam(), Beam()]
+    beam3_list = [beam03.duplicate(), Beam(), Beam(), Beam(), Beam()]
 
 
 
 
-########################################################################################################################
 
-    oe1.output_direction_from_optical_element(beam0001)
-    oe2.output_direction_from_optical_element(beam002)
+    for i in range (0, 2):
 
-    beam002.flag *= 0.
-    beam0001.flag *= 0.
+        ##### oe1 beam
 
-    screen.intersection_with_optical_element(beam0001)
-    screen.intersection_with_optical_element(beam002)
+       oe1.output_direction_from_optical_element(beam1_list[i])
+       beam1_list[i].flag *= 0
+
+       beam2_list[i+1] = beam1_list[i].duplicate()
+       beam3_list[i+1] = beam1_list[i].duplicate()
+
+       [beam2_list[i+1], t2] = oe2.intersection_with_optical_element(beam2_list[i+1])
+       [beam3_list[i+1], t3] = screen.intersection_with_optical_element(beam3_list[i+1])
+
+       origin = 2*np.ones(beam1_list[i].N)
+
+       indices = np.where(beam2_list[i+1].x > xmax)
+       beam2_list[i+1].flag[indices] = -1
+       indices = np.where(beam2_list[i+1].x < xmin)
+       beam2_list[i+1].flag[indices] = -1
+
+       indices = np.where(beam2_list[i+1].z > ymax)
+       beam2_list[i+1].flag[indices] = -1
+       indices = np.where(beam2_list[i+1].z < ymin)
+       beam2_list[i+1].flag[indices] = -1
+
+       indices = np.where(beam2_list[i+1].y > zmax)
+       beam2_list[i+1].flag[indices] = -1
+       indices = np.where(beam2_list[i+1].y < zmin)
+       beam2_list[i+1].flag[indices] = -1
+
+       maxim = 2*max(max(abs(t2)), max(abs(t3)))
+
+       indices = np.where(beam2_list[i+1].flag <0)
+       t2[indices] += 2*maxim
+
+       t = np.minimum(t2,t3)
+
+       indices = np.where(t3<t2)
+       origin[indices] = 3
+
+       print("Now the value of i is %d" %(i))
+       beam03 = beam3_list[i+1].part_of_beam(indices)
+
+       indices = np.where(origin==2)
+       beam2_list[i+1] = beam2_list[i+1].part_of_beam(indices)
+
+
+       ####oe2 beam
+
+
+       oe2.output_direction_from_optical_element(beam2_list[i])
+       beam2_list[i].flag *= 0
+
+       beam1_list[i + 1] = beam2_list[i].duplicate()
+       beam3_list[i + 1] = beam2_list[i].duplicate()
+
+
+       [beam1_list[i + 1], t1] = oe1.intersection_with_optical_element(beam1_list[i + 1])
+       [beam3_list[i + 1], t3] = screen.intersection_with_optical_element(beam3_list[i + 1])
+
+       origin02 =  np.ones(beam2_list[i].N)
+
+       indices = np.where(beam1_list[i + 1].x > xmax)
+       beam1_list[i + 1].flag[indices] = -1
+       indices = np.where(beam1_list[i + 1].x < xmin)
+       beam1_list[i + 1].flag[indices] = -1
+
+       indices = np.where(beam1_list[i + 1].y > ymax)
+       beam1_list[i + 1].flag[indices] = -1
+       indices = np.where(beam1_list[i + 1].y < ymin)
+       beam1_list[i + 1].flag[indices] = -1
+
+       indices = np.where(beam1_list[i + 1].z > zmax)
+       beam1_list[i + 1].flag[indices] = -1
+       indices = np.where(beam1_list[i + 1].z < zmin)
+       beam1_list[i + 1].flag[indices] = -1
+
+       maxim = 2 * max(max(abs(t1)), max(abs(t3)))
+
+       indices = np.where(beam1_list[i + 1].flag < 0)
+       t1[indices] += 2 * maxim
+
+
+       t = t1.copy()
+       t[indices] = t3[indices]
+
+       #indices = np.where(t3 < t1)
+
+       origin02[indices] += 2
+
+       indices = np.where(origin02==3)
+
+       beam003 = beam3_list[i + 1].part_of_beam(indices)
+
+
+       print("Now the value of i is %d" %(i))
+       beam3_list[i + 1] = beam03.merge(beam003)
+
+       #beam3_list[i + 1] = beam003.duplicate()
+       #beam3_list[i+1].plot_xz()
+
+       indices = np.where(origin02 == 1)
+       beam1_list[i + 1] = beam1_list[i + 1].part_of_beam(indices)
+
+
+
+
+
+
+    #oe1.output_direction_from_optical_element(beam1_list[2])
+    #oe2.output_direction_from_optical_element(beam2_list[2])
+    #print(beam1_list[2].N, beam2_list[2].N, beam2_list[2].x)
+
+    #beam1_list[2].flag = np.zeros(beam1_list[2].N)
+    #beam2_list[2].flag = np.zeros(beam2_list[2].N)
+
+    #print(beam1_list[2].flag)
+    #print(beam2_list[2].flag)
+
+
+    #screen.intersection_with_optical_element(beam1_list[2])
+    #screen.intersection_with_optical_element(beam2_list[2])
+
+    #beam1_list[2] = beam1_list[2].merge(beam2_list[2])
+
+
 
     plt.figure()
-    plt.plot(beam03.x, beam03.z, 'ro')
-    plt.plot(beam003.x, beam003.z, 'bo')
-    plt.plot(beam0003.x, beam0003.z, 'yo')
-    plt.plot(beam002.x, beam002.z, 'go')
-    plt.plot(beam0001.x, beam0001.z, 'go')
+    plt.plot(beam3_list[0].x, beam3_list[0].z, 'ro')
+    plt.plot(beam3_list[1].x, beam3_list[1].z, 'bo')
+    plt.plot(beam3_list[2].x, beam3_list[2].z, 'go')
+    #plt.plot(beam1_list[3].x, beam1_list[3].z, 'yo')
+    #plt.plot(beam1_list[4].x, beam1_list[4].z, 'ko')
     plt.xlabel('x axis')
     plt.ylabel('z axis')
     plt.axis('equal')
 
-    print("\n\nNo-reflection red\nLength = %f, Height = %f, area = %f, number of rays = %f"  %(max(beam03.x)-min(beam03.x), max(beam03.z)-min(beam03.z),(max(beam03.x)-min(beam03.x))*(max(beam03.z)-min(beam03.z)), beam03.N))
-    print("One-reflecction (HFM) blue\nLength = %f, Height = %f, area = %f, number of rays = %f"  %(max(beam003.x)-min(beam003.x), max(beam003.z)-min(beam003.z),(max(beam003.x)-min(beam003.x))*(max(beam003.z)-min(beam003.z)), beam003.N))
-    print("One-reflecction (VFM) yellow\nLength = %f, Height = %f, area = %f, number of rays = %f"  %(max(beam0003.x)-min(beam0003.x), max(beam0003.z)-min(beam0003.z),(max(beam0003.x)-min(beam0003.x))*(max(beam0003.z)-min(beam0003.z)), beam0003.N))
-
-    gxmax = max(max(beam0001.x),max(beam002.x))
-    gxmin = min(min(beam0001.x),min(beam002.x))
-    gzmax = max(max(beam0001.z),max(beam002.z))
-    gzmin = min(min(beam0001.z),min(beam002.z))
-    beam_f = beam0001.merge(beam002)
-
-    print("Double-reflection green\nLength = %f, Height = %f, area = %f, number of rays = %f"  %(gxmax-gxmin, gzmax-gzmin, (gxmax-gxmin)*(gzmax*gzmin), beam_f.N))
-    print("Total rays = %f\n\n" %(beam03.N+beam003.N+beam0003.N+beam_f.N))
+    beam3_list[2].histogram()
 
 
-    plt.figure()
-    plt.plot(beam_f.x, beam_f.z, 'go')
-    plt.xlabel('x axis')
-    plt.ylabel('y axis')
-    #beam_f.histogram()
+
+    print("FWHM(x) = %f"  %(max(beam3_list[2].x)-min(beam3_list[2].x)))
 
 
     plt.show()
