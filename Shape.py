@@ -5,15 +5,28 @@ class BoundaryShape(object):
 
 
 class BoundaryRectangle(BoundaryShape):
-    def __init__(self ,xmax ,xmin , ymax, ymin):
+    def __init__(self ,xmax ,xmin , ymax, ymin, zmax=None, zmin=None):
         self.xmax = xmax
         self.xmin = xmin
         self.ymax = ymax
         self.ymin = ymin
+        self.zmax = zmax
+        self.zmin = zmin
 
 
     def info(self):
-        return ("xmax=%f, xmin=%f, ymax=%f, ymin=%f"  %(self.xmax, self.xmin, self.ymax, self.ymin))
+        if self.zmax == None:
+            return ("xmax=%f, xmin=%f, ymax=%f, ymin=%f" % (self.xmax, self.xmin, self.ymax, self.ymin))
+        else:
+            return ("xmax=%f, xmin=%f, ymax=%f, ymin=%f, zmax=%f, zmin=%f"  %(self.xmax, self.xmin, self.ymax, self.ymin, self.zmax, self.zmin))
+
+    def duplicate(self):
+
+        bound = BoundaryRectangle(self.xmax, self.xmin, self.ymax, self.ymin, self.zmax, self.zmin)
+
+        return bound
+
+
 
 class BoundaryCircle(BoundaryShape):
     def __init__(self,R):

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Vector import Vector
 from SurfaceConic import SurfaceConic
+from Shape import BoundaryRectangle
 
 
 
@@ -24,6 +25,28 @@ class Optical_element(object):
         self.fz = None
 
 
+    def duplicate(self):
+
+        oe = Optical_element()
+
+        oe.p = self.p
+        oe.q = self.q
+        oe.theta =self.theta
+        oe.alpha =self.alpha
+        oe.type = self.type
+        if self.bound == None:
+            oe.bound = None
+        else:
+            oe.bound = self.bound.duplicate()
+        #
+        # IF ELEMENT IS native
+        oe.R = self.R  # SPHERICAL
+        oe.ccc_object = self.ccc_object.duplicate() # conic
+        oe.focal = self.focal
+        oe.fx = self.fx
+        oe.fz = self.fz
+
+        return oe
 
     def set_parameters(self,p=None,q=None,theta=None,alpha=None, type="None"):
 
@@ -173,7 +196,7 @@ class Optical_element(object):
     @classmethod
     def initialize_as_surface_conic_paraboloid_from_focal_distances(cls, p, q, theta=0., alpha=0,  infinity_location="q", focal=None, cylindrical=0, cylangle=0.0,
                                                       switch_convexity=0):
-        print("p is %d" %(p))
+        #print("p is %d" %(p))
         oe=Optical_element(p,q,theta,alpha)
         oe.type="Surface conical mirror"
         oe.focal=focal
@@ -246,6 +269,7 @@ class Optical_element(object):
 
         self.rotation_to_the_screen(beam)
         self.translation_to_the_screen(beam)
+        print(np.mean(beam.y))
         if np.abs(self.q) > 1e-13:
             print(self.type)
             self.intersection_with_the_screen(beam)
@@ -262,6 +286,8 @@ class Optical_element(object):
             [beam, t] =self._intersection_with_surface_conic(beam)
         elif self.type =="My hyperbolic mirror":
             [beam, t] =self._intersection_with_my_hyperbolic_mirror(beam)
+
+        #print(np.mean(t))
 
         return [beam, t]
 
@@ -330,7 +356,6 @@ class Optical_element(object):
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
         elif self.type == "Surface conical mirror 2":
             normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
-
 
 
         normal.normalization()
@@ -454,10 +479,14 @@ class Optical_element(object):
     def _intersection_with_surface_conic(self, beam):
 
 
-        indices = beam.flag >=0
+        #indices = beam.flag >=0
+        #beam.flag[indices] = beam.flag[indices] + 1
+        ##counter = beam.flag[indices][0]
+        #counter = beam.flag[0]*np.sign(beam.flag[0])
+
+        indices = beam.flag >=0.
         beam.flag[indices] = beam.flag[indices] + 1
-        #counter = beam.flag[indices][0]
-        counter = beam.flag[0]*np.sign(beam.flag[0])
+        counter = beam.flag[indices][0]
 
 
 
@@ -467,6 +496,8 @@ class Optical_element(object):
 
         t=np.ones(beam.N)
 
+
+
         # todo: leave the for loop
         #for i in range (beam.N):
         #    if np.abs(t1[i]-t_source >= np.abs(t2[i]-t_source)):
@@ -474,15 +505,14 @@ class Optical_element(object):
         #    else:
         #        t[i]=t2[i]
 
-        print("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nFor the parabolic mirror\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-        print(np.mean(t1), np.mean(t2))
+        #print(np.mean(t1), np.mean(t2))
 
         if np.abs(np.mean(t1-t_source) >= np.abs(np.mean(t2-t_source))):
             t=t1
         else:
             t=t2
 
-        print("\n%s:   t1=%f, t2=%f" %(self.type, np.mean(t1), np.mean(t2)))
+        #print("\n%s:   t1=%f, t2=%f" %(self.type, np.mean(t1), np.mean(t2)))
 
         beam.counter = 1
 
@@ -491,22 +521,31 @@ class Optical_element(object):
         beam.z = beam.z + beam.vz * t
 
         if self.bound != None:
+
             position_x=beam.x.copy()
             indices = np.where(position_x < self.bound.xmin)
-            position_x[indices] = 0
+            position_x[indices] = 0.0012598731458 + 1e36
             indices = np.where(position_x > self.bound.xmax)
-            position_x[indices] = 0
-            indices = np.where(position_x == 0)
+            position_x[indices] = 0.0012598731458 + 1e36
+            indices = np.where(position_x == 0.0012598731458 + 1e36)
             beam.flag[indices] = -1*counter
 
             position_y=beam.y.copy()
             indices = np.where(position_y < self.bound.ymin)
-            position_y[indices] = 0
+            position_y[indices] = 0.0012598731458 + 1e36
             indices = np.where(position_y > self.bound.ymax)
-            position_y[indices] = 0
-            indices = np.where(position_y == 0)
+            position_y[indices] = 0.0012598731458 + 1e36
+            indices = np.where(position_y == 0.0012598731458 + 1e36)
             beam.flag[indices] = -1*counter
 
+
+            position_z=beam.z.copy()
+            indices = np.where(position_z < self.bound.zmin)
+            position_z[indices] = 0.0012598731458 + 1e36
+            indices = np.where(position_z > self.bound.zmax)
+            position_z[indices] = 0.0012598731458 + 1e36
+            indices = np.where(position_z == 0.0012598731458 + 1e36)
+            beam.flag[indices] = -1*counter
 
         return [beam, t]
 
@@ -638,10 +677,10 @@ class Optical_element(object):
 
     def output_frame_wolter(self,beam):
 
-        print("Hello World")
         indices = np.where(beam.flag>=0)
-        print("The indices")
+        print("output frame wolter indices")
         print(indices)
+
         tx = np.mean(beam.vx[indices])
         ty = np.mean(beam.vy[indices])
         tz = np.mean(beam.vz[indices])
@@ -770,3 +809,13 @@ class Optical_element(object):
             txt += "\nThe bounds are\n"
             txt += self.bound.info()
         return txt
+
+
+    def rotation_surface_conic(self, alpha, axis = 'x'):
+
+        self.ccc_object.rotation_surface_conic(alpha, axis)
+
+
+    def translation_surface_conic(self, x0, axis='x'):
+
+        self.ccc_object.translation_surface_conic(x0, axis)

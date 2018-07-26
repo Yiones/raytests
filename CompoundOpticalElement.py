@@ -6,7 +6,7 @@ from Shape import BoundaryRectangle
 import numpy as np
 from SurfaceConic import SurfaceConic
 import matplotlib.pyplot as plt
-
+from Vector import Vector
 
 
 class CompoundOpticalElement(object):
@@ -190,6 +190,56 @@ class CompoundOpticalElement(object):
 
         return CompoundOpticalElement(oe_list=[oe1,oe2],oe_name="Kirkpatrick Baez")
 
+    @classmethod
+    def initialize_as_montel_parabolic(cls, p, q, theta, bound1, bound2, distance_of_the_screen=None, angle_of_mismatch=0.):
+
+        beta = (90. - angle_of_mismatch)*np.pi/180    #### angle beetween the two mirror, if angle_of_mismatch is >0 the two mirror are closer
+
+
+        oe1 = Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p=p, q=q, theta=theta, alpha=0., infinity_location='p', focal=q, cylindrical=1)
+        oe1.set_bound(bound1)
+
+        oe2 = oe1.duplicate()
+        oe2.rotation_surface_conic(beta, 'y')
+        oe2.set_bound(bound2)
+
+        if distance_of_the_screen == None:
+            distance_of_the_screen = q
+        ccc = np.array([0., 0., 0., 0., 0., 0., 0., 1., 0., -distance_of_the_screen])
+        screen = Optical_element.initialize_as_surface_conic_from_coefficients(ccc)
+        screen.set_parameters(p, q, 0., 0., "Surface conical mirror")
+
+
+
+        return CompoundOpticalElement(oe_list=[oe1, oe2, screen], oe_name="Montel parabolic")
+
+    @classmethod
+    def initialize_as_montel_ellipsoid(cls, p, q, theta, bound1, bound2, distance_of_the_screen=None, angle_of_mismatch=0.):
+
+        beta = (90.- angle_of_mismatch)*np.pi/180    #### angle beetween the two mirror
+
+
+        oe1 = Optical_element.initialize_as_surface_conic_ellipsoid_from_focal_distances(p=p, q=q, theta=theta, alpha=0., cylindrical=1)
+        oe1.set_bound(bound1)
+
+        oe2 = oe1.duplicate()
+        oe2.rotation_surface_conic(beta, 'y')
+        oe2.set_bound(bound2)
+
+
+        if distance_of_the_screen == None:
+            distance_of_the_screen = q
+
+        print(distance_of_the_screen)
+
+        ccc = np.array([0., 0., 0., 0., 0., 0., 0., 1., 0., -distance_of_the_screen])
+        screen = Optical_element.initialize_as_surface_conic_from_coefficients(ccc)
+        screen.set_parameters(p, q, 0., 0., "Surface conical mirror")
+
+
+        return CompoundOpticalElement(oe_list=[oe1, oe2, screen], oe_name="Montel ellipsoid")
+
+
     def compound_specification_after_oe(self, oe):
         if self.type == "Wolter 1":
             if oe.type == "Surface conical mirror":
@@ -283,10 +333,11 @@ class CompoundOpticalElement(object):
 
 
 
-    def trace_with_hole(self,beam1):
+    def trace_good_rays(self, beam1):
 
         beam11=beam1.duplicate()
         beam = beam1.duplicate()
+
 
         self.oe[0].rotation_to_the_optical_element(beam11)
         self.oe[0].translation_to_the_optical_element(beam11)
@@ -296,7 +347,10 @@ class CompoundOpticalElement(object):
         [b1, t1] = self.oe[0].intersection_with_optical_element(b1)
         [b2, t2] = self.oe[1].intersection_with_optical_element(b2)
 
-        beam.flag = beam.flag + 1
+
+        indices = np.where(beam.flag>=0)
+        beam.flag[indices] = beam.flag[indices] + 1
+
         if self.type == "Wolter 1":
             indices = np.where (t1>=t2)
         elif self.type == "Wolter 2":
@@ -305,6 +359,10 @@ class CompoundOpticalElement(object):
         beam.flag[indices] = -1*beam.flag[indices]
         print(beam.flag)
 
+
+        print("Trace indices")
+        indices = np.where(beam.flag>=0)
+        print(indices)
         #beam.plot_good_xz(0)
 
         beam = beam.good_beam()
@@ -322,14 +380,150 @@ class CompoundOpticalElement(object):
             print(">>>>>>NO GOOD RAYS")
 
 
-        #print("t1 is (that one of the parabolic mirror)")
-        ##print(t1)
-        #print(np.mean(t1))
-        #print("t2 is (that one of the hyperbolic mirror)")
-        ##print(t2)
-        #print(np.mean(t2))
-
-
         print("Number of good rays=%f" %(beam.number_of_good_rays()))
 
         return beam
+
+    def rotation_traslation_montel(self, beam):
+
+        theta = self.oe[0].theta
+        p = self.oe[0].p
+        q = self.oe[0].q
+
+
+
+        theta = np.pi / 2 - theta
+
+        vector = Vector(0., 1., 0.)
+        vector.rotation(-theta, 'x')
+
+
+        ny = -vector.z / np.sqrt(vector.y ** 2 + vector.z ** 2)
+        nz = vector.y / np.sqrt(vector.y ** 2 + vector.z ** 2)
+
+        n = Vector(0, ny, nz)
+
+        vrot = vector.rodrigues_formula(n, -theta)
+        vrot.normalization()
+
+
+        #########################################################################################################################
+
+        position = Vector(beam.x, beam.y, beam.z)
+        mod_position = position.modulus()
+        velocity = Vector(beam.vx, beam.vy, beam.vz)
+
+        position.rotation(-theta, 'x')
+        velocity.rotation(-theta, 'x')
+
+        position = position.rodrigues_formula(n, -theta)
+        velocity = velocity.rodrigues_formula(n, -theta)
+        velocity.normalization()
+
+        #position.normalization()
+        position.x = position.x #* mod_position
+        position.y = position.y #* mod_position
+        position.z = position.z #* mod_position
+
+        [beam.x, beam.y, beam.z] = [position.x, position.y, position.z]
+        [beam.vx, beam.vy, beam.vz] = [velocity.x, velocity.y, velocity.z]
+
+        ####### translation  ###################################################################################################
+
+        vector_point = Vector(0, p, 0)
+
+        vector_point.rotation(-theta,  "x")
+        vector_point = vector_point.rodrigues_formula(n, -theta)
+        vector_point.normalization()
+
+        beam.x = beam.x - vector_point.x * p
+        beam.y = beam.y - vector_point.y * p
+        beam.z = beam.z - vector_point.z * p
+
+        return beam
+
+
+    def time_comparison(self, beam1, elements):
+
+        origin = np.ones(beam1.N)
+        tf = 1e35 * np.ones(beam1.N)
+
+        for i in range (0, len(elements)):
+
+
+            beam = beam1.duplicate()
+            [beam, t] = self.oe[elements[i]-1].intersection_with_optical_element(beam)
+
+            indices = np.where(beam.flag<0)
+            t[indices] = 1e30
+
+            tf = np.minimum(t, tf)
+            indices = np.where(t == tf)
+            origin[indices] = elements[i]
+
+        return origin
+
+
+    def trace_montel(self,beam):
+
+
+        beam = self.rotation_traslation_montel(beam)
+
+        beam.plot_xz()
+
+        origin = self.time_comparison(beam, elements = [1, 2, 3])
+
+
+        indices = np.where(origin == 1)
+        beam1 = beam.part_of_beam(indices)
+        indices = np.where(origin == 2)
+        beam2 = beam.part_of_beam(indices)
+        indices = np.where(origin == 3)
+        beam3 = beam.part_of_beam(indices)
+
+
+        beam1.plot_xz(0)
+        beam2.plot_xz(0)
+        beam3.plot_xz(0)
+
+        plt.show()
+
+        print(beam1.N, beam2.N, beam3.N)
+
+        if beam3.N != 0:
+            [beam3, t] = self.oe[2].intersection_with_optical_element(beam3)
+
+        beam1_list = [beam1.duplicate(), Beam(), Beam()]
+        beam2_list = [beam2.duplicate(), Beam(), Beam()]
+        beam3_list = [beam3.duplicate(), Beam(), Beam()]
+
+
+
+        for i in range (0, 2):
+
+            print(i)
+
+            [beam1_list[i], t] = self.oe[0].intersection_with_optical_element(beam1_list[i])
+            self.oe[0].output_direction_from_optical_element(beam1_list[i])
+
+            origin = self.time_comparison(beam1_list[i], [2, 3])
+            indices = np.where(origin==2)
+            beam2_list[i+1] = beam1_list[i].part_of_beam(indices)
+            indices = np.where(origin==3)
+            beam03 = beam1_list[i].part_of_beam(indices)
+
+            [beam2_list[i], t] = self.oe[1].intersection_with_optical_element(beam2_list[i])
+            self.oe[1].output_direction_from_optical_element(beam2_list[i])
+
+            origin = self.time_comparison(beam2_list[i], [1,3])
+            indices = np.where(origin == 1)
+            beam1_list[i+1] = beam2_list[i].part_of_beam(indices)
+            indices = np.where(origin==3)
+            beam003 = beam2_list[i].part_of_beam(indices)
+
+            beam3_list[i+1] = beam03.merge(beam003)
+            if beam3_list[i+1].N != 0:
+                [beam3_list[i+1], t] = self.oe[2].intersection_with_optical_element(beam3_list[i+1])
+
+        return beam3_list
+

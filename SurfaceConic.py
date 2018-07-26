@@ -688,3 +688,111 @@ class SurfaceConic(object):
 
         return txt
 
+
+
+    def rotation_surface_conic(self, alpha, axis ):
+
+        if axis == 'x':
+            self.rotation_surface_conic_x(alpha)
+        elif axis == 'y':
+            self.rotation_surface_conic_y(alpha)
+        elif axis == 'z':
+            self.rotation_surface_conic_z(alpha)
+
+
+    def rotation_surface_conic_x(self, alpha):
+
+        a = numpy.cos(alpha)
+        b = numpy.sin(alpha)
+
+        c0 = self.ccc[0]
+        c1 = self.ccc[1] * a ** 2 + self.ccc[2] * b ** 2 + self.ccc[4] * a * b
+        c2 = self.ccc[1] * b ** 2 + self.ccc[2] * a ** 2 - self.ccc[4] * a * b
+        c3 = self.ccc[3] * a + self.ccc[5] * b
+        c4 = - 2 * self.ccc[1] * a * b + 2 * self.ccc[2] * a * b + self.ccc[4] * (a ** 2 - b ** 2)
+        c5 = - self.ccc[3] * b + self.ccc[5] * a
+        c6 = self.ccc[6]
+        c7 = self.ccc[7] * a + self.ccc[8] * b
+        c8 = - self.ccc[7] * b + self.ccc[8] * a
+        c9 = self.ccc[9]
+
+        self.ccc = numpy.array([c0, c1, c2, c3, c4, c5, c6, c7, c8, c9])
+
+    def rotation_surface_conic_y(self,alpha):
+
+        a = numpy.cos(alpha)
+        b = numpy.sin(alpha)
+
+
+        c0 = self.ccc[0] * a**2 + self.ccc[2] * b**2 - self.ccc[5] * a * b
+        c1 = self.ccc[1]
+        c2 = self.ccc[0] * b**2 + self.ccc[2] * a**2 + self.ccc[5] * a * b
+        c3 = self.ccc[3] * a - self.ccc[4] * b
+        c4 = self.ccc[3] * b + self.ccc[4] * a
+        c5 = 2 * self.ccc[0] * a * b - 2 * self.ccc[2] * a * b + self.ccc[5] * (a**2 - b**2)
+        c6 = self.ccc[6] *a - self.ccc[8] * b
+        c7 = self.ccc[7]
+        c8 = self.ccc[6] * b + self.ccc[8] * a
+        c9 = self.ccc[9]
+
+        self.ccc = numpy.array([c0, c1, c2, c3, c4, c5, c6, c7, c8, c9])
+
+    def rotation_surface_conic_z(self, alpha):
+
+        a = numpy.cos(alpha)
+        b = numpy.sin(alpha)
+
+        c0 = self.ccc[0] * a ** 2 + self.ccc[1] * b ** 2 + self.ccc[3] * a * b
+        c1 = self.ccc[0] * b ** 2 + self.ccc[1] * a ** 2 - self.ccc[3] * a * b
+        c2 = self.ccc[2]
+        c3 = - 2 * self.ccc[0] * a * b + 2 * self.ccc[1] * a * b + self.ccc[3] * (a ** 2 - b ** 2)
+        c4 = self.ccc[4] * a - self.ccc[5] * b
+        c5 = self.ccc[4] * b + self.ccc[5] * a
+        c6 = self.ccc[6] * a + self.ccc[7] * b
+        c7 = - self.ccc[6] * b + self.ccc[7] * a
+        c8 = self.ccc[8]
+        c9 = self.ccc[9]
+
+        self.ccc = numpy.array([c0, c1, c2, c3, c4, c5, c6, c7, c8, c9])
+
+
+    def translation_surface_conic (self, x0, axis = 'x'):
+
+        if axis == 'x':
+            self.translation_surface_conic_x(x0)
+        elif axis == 'y':
+            self.translation_surface_conic_y(x0)
+        elif axis == 'z':
+            self.translation_surface_conic_z(x0)
+
+
+    def translation_surface_conic_x(self, x0):
+
+        c6 = - 2 * self.ccc[0] * x0 + self.ccc[6]
+        c7 = - self.ccc[3] * x0 + self.ccc[7]
+        c8 = - self.ccc[5] * x0 + self.ccc[8]
+        c9 = self.ccc[0] * x0**2 + self.ccc[9] - self.ccc[6] * x0
+
+        self.ccc = numpy.array([self.ccc[0], self.ccc[1], self.ccc[2], self.ccc[3], self.ccc[4], self.ccc[5], c6, c7, c8, c9])
+
+
+
+    def translation_surface_conic_y(self, y0):
+
+        c6 = - self.ccc[3] * y0 + self.ccc[6]
+        c7 = - 2 * self.ccc[1] * y0 + self.ccc[7]
+        c8 = - self.ccc[4] * y0 + self.ccc[8]
+        c9 = self.ccc[1] * y0**2 + self.ccc[9] - self.ccc[7] * y0
+
+        self.ccc = numpy.array([self.ccc[0], self.ccc[1], self.ccc[2], self.ccc[3], self.ccc[4], self.ccc[5], c6, c7, c8, c9])
+
+
+
+    def translation_surface_conic_z(self, z0):
+
+        c6 = - self.ccc[5] * z0 + self.ccc[6]
+        c7 = - self.ccc[4] * z0 + self.ccc[7]
+        c8 = - 2 * self.ccc[2] * z0 + self.ccc[8]
+        c9 = self.ccc[2] * z0**2 + self.ccc[9] - self.ccc[8] * z0
+
+        self.ccc = numpy.array([self.ccc[0], self.ccc[1], self.ccc[2], self.ccc[3], self.ccc[4], self.ccc[5], c6, c7, c8, c9])

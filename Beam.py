@@ -29,17 +29,17 @@ class Beam(object):
 
     @classmethod
     def initialize_as_person(cls, N=10000):
-        beam1 = Beam(N *0.25)
+        beam1 = Beam(round(N *0.25))
         beam1.set_point(0. + 100, 0., 20. + 100)
         beam1.set_circular_spot(5.)
 
-        beam2 = Beam(N * 0.25)
+        beam2 = Beam(round(N *0.25))
         beam2.set_point(0. + 100, 0., 0. + 100)
         beam2.set_rectangular_spot(20., -20., 15., 10.)
 
         beam = beam1.merge(beam2)
 
-        beam3 = Beam(N * 0.5)
+        beam3 = Beam(round(N *0.5))
         beam3.set_point(0. + 100, 0., 0. + 100)
         beam3.set_rectangular_spot(5., -5., 10., -40.)
 
@@ -98,7 +98,29 @@ class Beam(object):
         beam.vz= self.vz[indices].copy()
         beam.flag= self.flag[indices].copy()
         beam.counter= self.counter
+
+        print("Good beam indices")
+        print(indices)
+
         return beam
+
+    def part_of_beam(self,indices):
+
+        N=np.size(indices)
+        beam = Beam(N)
+        beam.x= self.x[indices].copy()
+        beam.y= self.y[indices].copy()
+        beam.z= self.z[indices].copy()
+        beam.vx= self.vx[indices].copy()
+        beam.vy= self.vy[indices].copy()
+        beam.vz= self.vz[indices].copy()
+        beam.flag= self.flag[indices].copy()
+        beam.counter= self.counter
+
+        return beam
+
+
+
 
     def number_of_good_rays(self):
         return np.size(np.where(self.flag >= 0))

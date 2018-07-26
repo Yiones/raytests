@@ -21,6 +21,7 @@ class Vector(object):
         x=self.x.copy()
         y=self.y.copy()
         z=self.z.copy()
+
         self.x = x
         self.y = y*np.cos(alpha)-z*np.sin(alpha)
         self.z = y*np.sin(alpha)+z*np.cos(alpha)
