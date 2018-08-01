@@ -60,17 +60,6 @@ class Vector(object):
         elif axis=="z":
             self.rotation_z(angle)
 
-    def plane_normal(self):
-        return Vector(np.zeros(self.size()),np.zeros(self.size()),np.ones(self.size()))
-
-
-    def spherical_normal(self,R):
-        normal=Vector(
-                        2*self.x,
-                        2*self.y,
-                        2*self.z-2*R )
-
-        return normal
 
     def surface_conic_normal(self,ccc):
 

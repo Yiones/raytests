@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import pi
 from Vector import Vector
-from OpticalElement import Optical_element
 
 
 class Beam(object):
@@ -24,7 +23,6 @@ class Beam(object):
         self.flag = np.zeros(N)
 
         self.N = round(N)
-        self.counter=0
 
 
     @classmethod
@@ -58,7 +56,7 @@ class Beam(object):
         self.z = z + self.z
 
 
-    def initialize_from_arrays(self, x,y,z,vx,vy,vz,flag,counter):
+    def initialize_from_arrays(self, x,y,z,vx,vy,vz,flag):
 
         self.x = x
         self.y = y
@@ -71,7 +69,6 @@ class Beam(object):
         self.flag = flag
 
         self.N = x.size
-        self.counter=counter
 
 
     def duplicate(self):
@@ -83,7 +80,7 @@ class Beam(object):
                                  self.vy.copy(),
                                  self.vz.copy(),
                                  self.flag.copy(),
-                                 self.counter)
+                                 )
         return b
 
     def good_beam(self):
@@ -97,7 +94,6 @@ class Beam(object):
         beam.vy= self.vy[indices].copy()
         beam.vz= self.vz[indices].copy()
         beam.flag= self.flag[indices].copy()
-        beam.counter= self.counter
 
         print("Good beam indices")
         print(indices)
@@ -115,7 +111,6 @@ class Beam(object):
         beam.vy= self.vy[indices].copy()
         beam.vz= self.vz[indices].copy()
         beam.flag= self.flag[indices].copy()
-        beam.counter= self.counter
 
         return beam
 
@@ -330,30 +325,4 @@ class Beam(object):
         plt.hist(self.z,100)
         plt.title('z position for uniform distribution')
 
-
-
-if __name__ == "__main__":
-
-    #### Generation of the Beam
-
-    beam1=Beam(2)
-    beam1.set_point(0,0,0)
-    #beam1.set_gaussian_divergence(0.001,0.0001)
-    beam1.set_flat_divergence(5e-3,5e-2)
-
-    #### Data of the plane mirron
-
-    p=1.
-    q=0.
-    theta=0
-    alpha=0
-    R=2*p*q/(p+q)/np.cos(pi/180.0*theta)
-    spherical_mirror=Optical_element.initialize_as_plane_mirror(p,q,theta,alpha)
-
-    beam1=spherical_mirror.trace_optical_element(beam1)
-
-    #beam1.plot_xz()
-
-
-    plt.show()
 

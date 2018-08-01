@@ -18,7 +18,6 @@ class Optical_element(object):
 
         #
         # IF ELEMENT IS native
-        self.R = None  # SPHERICAL
         self.ccc_object = None # conic
         self.focal = None
         self.fx = None
@@ -40,7 +39,6 @@ class Optical_element(object):
             oe.bound = self.bound.duplicate()
         #
         # IF ELEMENT IS native
-        oe.R = self.R  # SPHERICAL
         oe.ccc_object = self.ccc_object.duplicate() # conic
         oe.focal = self.focal
         oe.fx = self.fx
@@ -69,33 +67,9 @@ class Optical_element(object):
     # native
     #
 
-    @classmethod
-    def initialize_as_plane_mirror(cls, p, q,theta=0., alpha=0.):
-
-        plane_mirror=Optical_element(p,q,theta,alpha)
-        plane_mirror.type="Plane mirror"
-
-        return plane_mirror
-
 
     @classmethod
-    def initialize_as_spherical_mirror(cls, p, q,theta=0. , alpha=0. , R=None):
-
-        spherical_mirror=Optical_element(p,q,theta,alpha)
-
-        if R is None:
-            spherical_mirror.R=2*p*q/(p+q)/np.cos(theta)
-        else:
-            spherical_mirror.R = R
-
-        spherical_mirror.type="Spherical mirror"
-        print(spherical_mirror.R)
-
-        return spherical_mirror
-
-
-    @classmethod
-    def ideal_lens(clsc, p, q, fx=None, fz=None):
+    def initialiaze_as_ideal_lens(clsc, p, q, fx=None, fz=None):
 
         oe=Optical_element(p,q,0.0,0.0)
         oe.type="Ideal lens"
@@ -244,7 +218,6 @@ class Optical_element(object):
 
 
         beam=beam1.duplicate()
-        beam.counter=beam.counter+1
 
         self.effect_of_optical_element(beam)
 
@@ -276,12 +249,8 @@ class Optical_element(object):
 
 
     def intersection_with_optical_element(self, beam):
-        if self.type == "Plane mirror":
+        if self.type == "Ideal lens":
             [beam, t] =self._intersection_with_plane_mirror(beam)
-        elif self.type == "Ideal lens":
-            [beam, t] =self._intersection_with_plane_mirror(beam)
-        elif self.type == "Spherical mirror":
-            [beam, t] =self._intersection_with_spherical_mirror(beam)
         elif self.type == "Surface conical mirror":
             [beam, t] =self._intersection_with_surface_conic(beam)
         elif self.type =="My hyperbolic mirror":
@@ -345,20 +314,15 @@ class Optical_element(object):
 
 
     def mirror_output_direction(self,beam):
-        position = Vector(beam.x, beam.y, beam.z)
-        if self.type == "Plane mirror":
-            normal = position.plane_normal()
-        elif self.type == "Spherical mirror":
-            normal = position.spherical_normal(self.R)
-        elif self.type == "Surface conical mirror":
-            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
+
+        if self.type == "Surface conical mirror":
+            normal_conic = self.ccc_object.get_normal(np.array([beam.x, beam.y, beam.z]))
         elif self.type == "My hyperbolic mirror":
-            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
+            normal_conic = self.ccc_object.get_normal(np.array([beam.x, beam.y, beam.z]))
         elif self.type == "Surface conical mirror 2":
-            normal = position.surface_conic_normal(self.ccc_object.get_coefficients())
+            normal_conic = self.ccc_object.get_normal(np.array([beam.x, beam.y, beam.z]))
 
-
-        normal.normalization()
+        normal = Vector(normal_conic[0,:],normal_conic[1,:], normal_conic[2,:])
         velocity = Vector(beam.vx, beam.vy, beam.vz)
         vperp = velocity.perpendicular_component(normal)
         v2 = velocity.sum(vperp)
@@ -434,45 +398,7 @@ class Optical_element(object):
         return [beam, t]
 
 
-    def _intersection_with_spherical_mirror(self, beam, ):
 
-        indices = beam.flag >= 0
-        beam.flag[indices] = beam.flag[indices] + 1
-        counter = beam.flag[indices][0]
-
-        a=beam.vx**2+beam.vy**2+beam.vz**2
-        b=beam.x*beam.vx+beam.y*beam.vy+beam.z*beam.vz-beam.vz*self.R                             #This is not b but b/2
-        c=beam.x**2+beam.y**2+beam.z**2-2*beam.z*self.R
-        t=(-2*b+np.sqrt(4*b**2-4*a*c))/(2*a)
-        if t[0]>=0:
-            t=t
-        else:
-            t=(-b-np.sqrt(b**2-a*c))/a
-
-        beam.x = beam.x+beam.vx*t
-        beam.y = beam.y+beam.vy*t
-        beam.z = beam.z+beam.vz*t
-
-        if self.bound != None:
-            position_x = beam.x.copy()
-            indices = np.where(position_x < self.bound.xmin)
-            position_x[indices] = 0
-            indices = np.where(position_x > self.bound.xmax)
-            position_x[indices] = 0
-            indices = np.where(position_x == 0)
-            beam.flag[indices] = -1 * counter
-
-            position_y = beam.y.copy()
-            indices = np.where(position_y < self.bound.ymin)
-            position_y[indices] = 0
-            indices = np.where(position_y > self.bound.ymax)
-            position_y[indices] = 0
-            indices = np.where(position_y == 0)
-            beam.flag[indices] = -1 * counter
-
-
-        return [beam, t]
-#
 
 
 

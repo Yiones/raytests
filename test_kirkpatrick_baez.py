@@ -117,4 +117,3 @@ def test_kirk_patrick_baez():
 
     if do_plot:
         plt.show()
-

@@ -163,6 +163,39 @@ class CompoundOpticalElement(object):
         return CompoundOpticalElement(oe_list=[oe1,oe2],oe_name="Wolter 3")
 
     @classmethod
+    def wolter_for_japanese(cls,p,q,d,q1,theta1,theta2):
+
+        ##############  ellipse     ####################################################################################
+        ae = (p+q1)/2
+        be = np.sqrt(p*q1)*np.cos(theta1)
+        f = np.sqrt(ae**2-be**2)
+        beta = np.arccos((p**2+4*f**2-q1**2)/(4*p*f))
+
+        ccc1 = np.array([1. / be ** 2, 1. / be ** 2, 1 / ae ** 2, 0., 0., 0., 0., 0., 0., -1])
+
+        y = - p * np.sin(beta)
+        z = f - p * np.cos(beta)
+
+        oe1 = Optical_element.initialize_as_surface_conic_from_coefficients(ccc1)
+        oe1.set_parameters(p=p, q=q1, theta=theta1)
+        ##############   hyperbola  ####################################################################################
+        p1 = q1 - d
+        ah = (p1 - q)/2
+        bh = np.sqrt(p1*q)*np.cos(theta2)
+        z0 = np.sqrt(ae**2-be**2) - np.sqrt(ah**2+bh**2)
+
+        print("z0 = %f" %z0)
+
+        ccc2 = np.array([-1. / ah ** 2, -1. / ah ** 2, 1 / bh ** 2, 0., 0., 0., 0., 0., 2 * z0 / bh ** 2, z0 ** 2 / bh ** 2 - 1])
+
+        oe2 = Optical_element.initialize_as_surface_conic_from_coefficients(ccc2)
+        oe2.set_parameters(p=p1, q=q, theta=theta2)
+
+        return CompoundOpticalElement(oe_list=[oe1, oe2], oe_name="Wolter for japanese")
+
+
+
+    @classmethod
     def initialize_as_kirkpatrick_baez(cls, p, q, separation, theta, bound1, bound2):
 
 
@@ -388,7 +421,6 @@ class CompoundOpticalElement(object):
 
         theta = self.oe[0].theta
         p = self.oe[0].p
-        q = self.oe[0].q
 
 
 
@@ -486,7 +518,6 @@ class CompoundOpticalElement(object):
         beam2.plot_xz(0)
         beam3.plot_xz(0)
 
-        plt.show()
 
         print(beam1.N, beam2.N, beam3.N)
 
@@ -526,4 +557,35 @@ class CompoundOpticalElement(object):
                 [beam3_list[i+1], t] = self.oe[2].intersection_with_optical_element(beam3_list[i+1])
 
         return beam3_list
+
+
+    def velocity_wolter_japanes(self,beam):
+
+        p = self.oe[0].p
+        q = self.oe[0].q
+        ccc = self.oe[0].ccc_object.get_coefficients()
+        print("ccc")
+        print(ccc,ccc[2]**-0.5,ccc[0]**-0.5)
+        ae = ccc[2]**-0.5
+        be = 1/np.sqrt(ccc[0])
+        f = np.sqrt(ae**2-be**2)
+        print("p=%f, q=%f, ae=%f, be=%f f=%f" %(p,q,ae,be,f))
+
+        beta = np.arccos((p**2+4*f**2-q**2)/(4*p*f))
+        y = p * np.sin(beta)
+        z = f - p * np.cos(beta)
+
+        v = Vector(0., y/p, (z-f)/p)
+        v.normalization()
+        v0 = Vector(0., 0., -1.)
+        v0.normalization()
+        alpha = np.arccos(v.dot(v0))
+
+        velocity = Vector(beam.vx, beam.vz, -beam.vy)
+        velocity.rotation(-alpha, 'x')
+
+        beam.vx = velocity.x
+        beam.vy = velocity.y
+        beam.vz = velocity.z
+
 

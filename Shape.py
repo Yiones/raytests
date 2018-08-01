@@ -10,8 +10,9 @@ class BoundaryRectangle(BoundaryShape):
         self.xmin = xmin
         self.ymax = ymax
         self.ymin = ymin
-        self.zmax = zmax
-        self.zmin = zmin
+        if zmax == None:
+            self.zmax = 1e33
+            self.zmin = -1e33
 
 
     def info(self):

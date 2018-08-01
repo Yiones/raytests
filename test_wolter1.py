@@ -490,7 +490,6 @@ from SurfaceConic import SurfaceConic
 
 
 
-
 def test_compound_wolter1_with_hole():
 
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   test_compound_wolter1_with_hole")
@@ -518,7 +517,7 @@ def test_compound_wolter1_with_hole():
 
 
     #beam = wolter.trace_compound(beam)
-    beam = wolter.trace_with_hole(beam)
+    beam = wolter.trace_good_rays(beam)
 
     beam.plot_good_xz()
     beam.retrace(10.)

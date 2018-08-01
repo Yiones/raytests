@@ -1,4 +1,5 @@
 from Beam import Beam
+import unittest
 from OpticalElement import Optical_element
 import matplotlib.pyplot as plt
 import numpy as np
@@ -256,173 +257,171 @@ def run_shadow_hyperbolic_mirror(beam):
     return beam
 
 
+class SurfaceConicTest(unittest.TestCase):
 
-def test_spherical_mirror():
+    def test_spherical_mirror(self):
 
-    print(">>>>>>>>>>>>>>> test_spherical_mirror")
-    shadow_beam = run_shadow_source()
+        print(">>>>>>>>>>>>>>> test_spherical_mirror")
+        shadow_beam = run_shadow_source()
 
-    beam1=Beam()
-    beam1.initialize_from_arrays(
-        shadow_beam.getshonecol(1),
-        shadow_beam.getshonecol(2),
-        shadow_beam.getshonecol(3),
-        shadow_beam.getshonecol(4),
-        shadow_beam.getshonecol(5),
-        shadow_beam.getshonecol(6),
-        shadow_beam.getshonecol(10),
-        0
-    )
+        beam1=Beam()
+        beam1.initialize_from_arrays(
+            shadow_beam.getshonecol(1),
+            shadow_beam.getshonecol(2),
+            shadow_beam.getshonecol(3),
+            shadow_beam.getshonecol(4),
+            shadow_beam.getshonecol(5),
+            shadow_beam.getshonecol(6),
+            shadow_beam.getshonecol(10),
+        )
 
-    #beam1 = Beam(5000)
-    #beam1.set_point(0, 0, 0)
-    #beam1.set_flat_divergence(5e-3, 5e-2)
-    p=2.
-    q=1.
-    theta=41*np.pi/180
+        #beam1 = Beam(5000)
+        #beam1.set_point(0, 0, 0)
+        #beam1.set_flat_divergence(5e-3, 5e-2)
+        p=2.
+        q=1.
+        theta=41*np.pi/180
 
-    shadow_beam = run_shadow_source()
+        shadow_beam = run_shadow_source()
 
-    spherical_mirror=Optical_element.initialize_as_surface_conic_sphere_from_focal_distances(p,q, theta)
+        spherical_mirror=Optical_element.initialize_as_surface_conic_sphere_from_focal_distances(p,q, theta)
 
-    beam1=spherical_mirror.trace_optical_element(beam1)
-
-
-    if do_plot:
-        beam1.plot_xz()
-        beam1.plot_xpzp()
-        plt.title("Spherical mirror with p=2, q=1, theta=41")
-        plt.show()
-
-    shadow_beam = run_shadow_spherical_mirror(shadow_beam)
+        beam1=spherical_mirror.trace_optical_element(beam1)
 
 
-    assert_almost_equal(beam1.x, shadow_beam.getshonecol(1), 8)
-    assert_almost_equal(beam1.y, shadow_beam.getshonecol(2), 8)
-    assert_almost_equal(beam1.z, shadow_beam.getshonecol(3), 8)
+        if do_plot:
+            beam1.plot_xz()
+            beam1.plot_xpzp()
+            plt.title("Spherical mirror with p=2, q=1, theta=41")
+            plt.show()
+
+        shadow_beam = run_shadow_spherical_mirror(shadow_beam)
+
+
+        assert_almost_equal(beam1.x, shadow_beam.getshonecol(1), 8)
+        assert_almost_equal(beam1.y, shadow_beam.getshonecol(2), 8)
+        assert_almost_equal(beam1.z, shadow_beam.getshonecol(3), 8)
 
 
 
-def test_ellipsoidal_mirror():
+    def test_ellipsoidal_mirror(self):
 
-    print(">>>>>>>>>>>>>>> test_ellipsoidal_mirror")
+        print(">>>>>>>>>>>>>>> test_ellipsoidal_mirror")
 
-    #beam1=Beam(5000)
-    #beam1.set_point(0,0,0)
-    #beam1.set_flat_divergence(5e-3,5e-2)
+        #beam1=Beam(5000)
+        #beam1.set_point(0,0,0)
+        #beam1.set_flat_divergence(5e-3,5e-2)
 
-    shadow_beam = run_shadow_source()
+        shadow_beam = run_shadow_source()
 
-    beam1=Beam()
-    beam1.initialize_from_arrays(
-        shadow_beam.getshonecol(1),
-        shadow_beam.getshonecol(2),
-        shadow_beam.getshonecol(3),
-        shadow_beam.getshonecol(4),
-        shadow_beam.getshonecol(5),
-        shadow_beam.getshonecol(6),
-        shadow_beam.getshonecol(10),
-        0
-    )
+        beam1=Beam()
+        beam1.initialize_from_arrays(
+            shadow_beam.getshonecol(1),
+            shadow_beam.getshonecol(2),
+            shadow_beam.getshonecol(3),
+            shadow_beam.getshonecol(4),
+            shadow_beam.getshonecol(5),
+            shadow_beam.getshonecol(6),
+            shadow_beam.getshonecol(10),
+        )
 
-    p=20.
-    q=10.
-    theta=50*np.pi/180
+        p=20.
+        q=10.
+        theta=50*np.pi/180
 
-    spherical_mirror=Optical_element.initialize_as_surface_conic_ellipsoid_from_focal_distances(p,q,theta)
+        spherical_mirror=Optical_element.initialize_as_surface_conic_ellipsoid_from_focal_distances(p,q,theta)
 
-    beam1=spherical_mirror.trace_optical_element(beam1)
+        beam1=spherical_mirror.trace_optical_element(beam1)
 
-    if do_plot:
-        beam1.plot_xz()
-        beam1.plot_xpzp()
-        plt.title("Ellipsoidal mirror with p=20, q=10, theta=50")
-        plt.show()
+        if do_plot:
+            beam1.plot_xz()
+            beam1.plot_xpzp()
+            plt.title("Ellipsoidal mirror with p=20, q=10, theta=50")
+            plt.show()
 
-    shadow_beam = run_shadow_elliptical_mirror(beam1)
-
-
-    assert_almost_equal(beam1.vx, shadow_beam.getshonecol(4), 1)
-    assert_almost_equal(beam1.vy, shadow_beam.getshonecol(5), 1)
-    assert_almost_equal(beam1.vz, shadow_beam.getshonecol(6), 1)
+        shadow_beam = run_shadow_elliptical_mirror(beam1)
 
 
-def test_paraboloid_mirror():
-
-    print(">>>>>>>>>>>>>>> test_paraboloid_mirror")
-    #beam1=Beam(5000)
-    #beam1.set_point(0,0,0)
-    #beam1.set_flat_divergence(5e-3,5e-2)
-
-    shadow_beam = run_shadow_source()
-
-    beam1=Beam()
-    beam1.initialize_from_arrays(
-        shadow_beam.getshonecol(1),
-        shadow_beam.getshonecol(2),
-        shadow_beam.getshonecol(3),
-        shadow_beam.getshonecol(4),
-        shadow_beam.getshonecol(5),
-        shadow_beam.getshonecol(6),
-        shadow_beam.getshonecol(10),
-        0
-    )
-
-    p=10.
-    q=20.
-    theta=72*np.pi/180
-    alpha=0*np.pi/180
-    spherical_mirror=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha)
-    beam1=spherical_mirror.trace_optical_element(beam1)
-
-    if do_plot:
-        beam1.plot_xz()
-        beam1.plot_xpzp()
-        plt.title("Paraboloid mirror  with p=10, q=20, theta=72")
-        print(spherical_mirror.ccc_object.get_coefficients())
-        plt.show()
-
-    shadow_beam = run_shadow_parabolic_mirror(shadow_beam)
+        assert_almost_equal(beam1.vx, shadow_beam.getshonecol(4), 1)
+        assert_almost_equal(beam1.vy, shadow_beam.getshonecol(5), 1)
+        assert_almost_equal(beam1.vz, shadow_beam.getshonecol(6), 1)
 
 
-    assert_almost_equal(beam1.x, shadow_beam.getshonecol(1), 7)
-    assert_almost_equal(beam1.y, shadow_beam.getshonecol(2), 7)
-    assert_almost_equal(beam1.z, shadow_beam.getshonecol(3), 7)
+    def test_paraboloid_mirror(self):
+
+        print(">>>>>>>>>>>>>>> test_paraboloid_mirror")
+        #beam1=Beam(5000)
+        #beam1.set_point(0,0,0)
+        #beam1.set_flat_divergence(5e-3,5e-2)
+
+        shadow_beam = run_shadow_source()
+
+        beam1=Beam()
+        beam1.initialize_from_arrays(
+            shadow_beam.getshonecol(1),
+            shadow_beam.getshonecol(2),
+            shadow_beam.getshonecol(3),
+            shadow_beam.getshonecol(4),
+            shadow_beam.getshonecol(5),
+            shadow_beam.getshonecol(6),
+            shadow_beam.getshonecol(10),
+        )
+
+        p=10.
+        q=20.
+        theta=72*np.pi/180
+        alpha=0*np.pi/180
+        spherical_mirror=Optical_element.initialize_as_surface_conic_paraboloid_from_focal_distances(p,q,theta,alpha)
+        beam1=spherical_mirror.trace_optical_element(beam1)
+
+        if do_plot:
+            beam1.plot_xz()
+            beam1.plot_xpzp()
+            plt.title("Paraboloid mirror  with p=10, q=20, theta=72")
+            print(spherical_mirror.ccc_object.get_coefficients())
+            plt.show()
+
+        shadow_beam = run_shadow_parabolic_mirror(shadow_beam)
+
+
+        assert_almost_equal(beam1.x, shadow_beam.getshonecol(1), 7)
+        assert_almost_equal(beam1.y, shadow_beam.getshonecol(2), 7)
+        assert_almost_equal(beam1.z, shadow_beam.getshonecol(3), 7)
 
 
 
 
-####     This is problematic     #######################################################################################
-#
-#def test_hyperboloid_mirror():
-#    #beam1=Beam(5000)
-#    #beam1.set_point(0,0,0)
-#    #beam1.set_flat_divergence(5e-3,5e-2)
-#
-#    shadow_beam=run_shadow_source()
-#
-#    beam1=Beam(5000)
-#    beam1.initialize_from_arrays(
-#        shadow_beam.getshonecol(1),
-#        shadow_beam.getshonecol(2),
-#        shadow_beam.getshonecol(3),
-#        shadow_beam.getshonecol(4),
-#        shadow_beam.getshonecol(5),
-#        shadow_beam.getshonecol(6),
-#        shadow_beam.getshonecol(10),
-#        0
-#    )
-#
-#    p=1.
-#    q=2.
-#    theta = 76*np.pi/180
-#    spherical_mirror=Optical_element.initialize_as_hyperboloid_from_focal_distances(p,q,theta)
-#    beam1=spherical_mirror.trace_surface_conic(beam1)
-#    beam1.plot_xz()
-#    beam1.plot_xpzp()
-#    plt.show()
-#
-#    shadow_beam=run_shadow_hyperbolic_mirror(shadow_beam)
-#
-#
+########     This is problematic     #######################################################################################
+    #
+    #def test_hyperboloid_mirror():
+    #    #beam1=Beam(5000)
+    #    #beam1.set_point(0,0,0)
+    #    #beam1.set_flat_divergence(5e-3,5e-2)
+    #
+    #    shadow_beam=run_shadow_source()
+    #
+    #    beam1=Beam(5000)
+    #    beam1.initialize_from_arrays(
+    #        shadow_beam.getshonecol(1),
+    #        shadow_beam.getshonecol(2),
+    #        shadow_beam.getshonecol(3),
+    #        shadow_beam.getshonecol(4),
+    #        shadow_beam.getshonecol(5),
+    #        shadow_beam.getshonecol(6),
+    #        shadow_beam.getshonecol(10),
+    #        0
+    #    )
+    #
+    #    p=1.
+    #    q=2.
+    #    theta = 76*np.pi/180
+    #    spherical_mirror=Optical_element.initialize_as_hyperboloid_from_focal_distances(p,q,theta)
+    #    beam1=spherical_mirror.trace_surface_conic(beam1)
+    #    beam1.plot_xz()
+    #    beam1.plot_xpzp()
+    #    plt.show()
+    #
+    #    shadow_beam=run_shadow_hyperbolic_mirror(shadow_beam)
+    #
+    #
 ########################################################################################################################
